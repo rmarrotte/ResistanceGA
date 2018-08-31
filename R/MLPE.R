@@ -28,7 +28,8 @@ MLPE.lmm <-
            REML = FALSE,
            ID = NULL,
            ZZ = NULL,
-           scale = TRUE) {
+           scale = TRUE,
+           addZZ = TRUE) {
     response = pairwise.genetic
     
     if (class(resistance)[[1]] == 'dist') {
@@ -95,20 +96,25 @@ MLPE.lmm <-
     #     LAYER<-assign("Resist",value=dat$cs.matrix)
     
     # Fit model
-    mod <-
-      lFormula(response ~ resistance + (1 | pop1),
+    mod <- lFormula(response ~ resistance + (1 | pop1),
                data = dat,
                REML = REML)
-    mod$reTrms$Zt <- ZZ
+    if(addZZ){
+      mod$reTrms$Zt <- ZZ
+    } 
     dfun <- do.call(mkLmerDevfun, mod)
     opt <- optimizeLmer(dfun)
-    MOD <-
-      (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
+    MOD <- (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
     return(MOD)
   }
 
 
-MLPE.lmm2 <- function(resistance, response, REML = FALSE, ID, ZZ) {
+MLPE.lmm2 <- function(resistance, 
+                      response, 
+                      REML = FALSE, 
+                      ID, 
+                      ZZ, 
+                      addZZ = TRUE) {
   if (class(resistance)[1] != 'dist') {
     res <- resistance[which(resistance != -1)]
     
@@ -126,11 +132,12 @@ MLPE.lmm2 <- function(resistance, response, REML = FALSE, ID, ZZ) {
   #   LAYER<-assign("Resist",value=dat$resistance)
   
   # Fit model
-  mod <-
-    lFormula(response ~ scale(resistance) + (1 | pop1),
+  mod <- lFormula(response ~ scale(resistance) + (1 | pop1),
              data = dat,
              REML = REML)
-  mod$reTrms$Zt <- ZZ
+  if(addZZ){
+    mod$reTrms$Zt <- ZZ
+  }  
   dfun <- do.call(mkLmerDevfun, mod)
   opt <- optimizeLmer(dfun)
   MOD <-
@@ -145,7 +152,8 @@ MLPE.lmm_coef <-
            out.dir = NULL,
            method,
            ID = NULL,
-           ZZ = NULL) {
+           ZZ = NULL,
+           addZZ = TRUE) {
     if (method == "cs") {
       response = genetic.dist
       resist.mat <-
@@ -183,7 +191,10 @@ MLPE.lmm_coef <-
           lFormula(response ~ resistance + (1 | pop1),
                    data = dat,
                    REML = TRUE)
-        mod$reTrms$Zt <- ZZ
+        if(addZZ){
+          mod$reTrms$Zt <- ZZ
+        }
+        
         dfun <- do.call(mkLmerDevfun, mod)
         opt <- optimizeLmer(dfun)
         Mod.Summary <-
@@ -229,7 +240,10 @@ MLPE.lmm_coef <-
           lFormula(response ~ LAYER + (1 | pop1),
                    data = dat,
                    REML = TRUE)
-        mod$reTrms$Zt <- ZZ
+        if(addZZ){
+          mod$reTrms$Zt <- ZZ
+        }
+        
         dfun <- do.call(mkLmerDevfun, mod)
         opt <- optimizeLmer(dfun)
         Mod.Summary <-
