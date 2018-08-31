@@ -119,7 +119,8 @@ GA.prep <- function(ASCII.dir,
                     pop.size = NULL,
                     parallel = FALSE,
                     seed = NULL,
-                    quiet = FALSE) {
+                    quiet = FALSE,
+                    addZZ = TRUE) {
   if(scale == FALSE) {
     scale <- NULL
   }
@@ -475,7 +476,8 @@ GA.prep <- function(ASCII.dir,
         pop.size = pop.size,
         parallel = parallel,
         seed = seed,
-        quiet = quiet
+        quiet = quiet,
+        addZZ = addZZ
       )
     )
   }
