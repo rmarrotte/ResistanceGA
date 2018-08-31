@@ -28,8 +28,7 @@ MLPE.lmm <-
            REML = FALSE,
            ID = NULL,
            ZZ = NULL,
-           scale = TRUE,
-           addZZ = TRUE) {
+           scale = TRUE) {
     response = pairwise.genetic
     
     if (class(resistance)[[1]] == 'dist') {
@@ -93,15 +92,21 @@ MLPE.lmm <-
     colnames(dat) <- c("pop1", "pop2", "resistance", "response")
     
     # Assign value to layer
-    #     LAYER<-assign("Resist",value=dat$cs.matrix)
+    #     LAYER<-assign("Resist",value=dat$cs.matrix)  
+   
     
-    # Fit model
-    mod <- lFormula(response ~ resistance + (1 | pop1),
+    # If pops are not BOTH found in pop1 and pop2, ignore the ZZ mat
+    if(any(!is.na(match(dat$pop1,dat$pop2)))){
+      # Fit model
+      mod <- lFormula(response ~ resistance + (1 | pop1),
+              data = dat,
+              REML = REML)
+      mod$reTrms$Zt <- ZZ
+    }else{
+      mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
                data = dat,
                REML = REML)
-    if(addZZ){
-      mod$reTrms$Zt <- ZZ
-    } 
+    }
     dfun <- do.call(mkLmerDevfun, mod)
     opt <- optimizeLmer(dfun)
     MOD <- (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
@@ -132,12 +137,17 @@ MLPE.lmm2 <- function(resistance,
   #   LAYER<-assign("Resist",value=dat$resistance)
   
   # Fit model
-  mod <- lFormula(response ~ scale(resistance) + (1 | pop1),
-             data = dat,
-             REML = REML)
-  if(addZZ){
-    mod$reTrms$Zt <- ZZ
-  }  
+  if(any(!is.na(match(dat$pop1,dat$pop2)))){
+      # Fit model
+      mod <- lFormula(response ~ resistance + (1 | pop1),
+              data = dat,
+              REML = REML)
+      mod$reTrms$Zt <- ZZ
+   }else{
+      mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
+               data = dat,
+               REML = REML)
+   } 
   dfun <- do.call(mkLmerDevfun, mod)
   opt <- optimizeLmer(dfun)
   MOD <-
@@ -186,13 +196,16 @@ MLPE.lmm_coef <-
         # Assign value to layer
         LAYER <- assign(resist.names[i], value = dat$cs.matrix)
         
-        # Fit model
-        mod <-
-          lFormula(response ~ resistance + (1 | pop1),
-                   data = dat,
-                   REML = TRUE)
-        if(addZZ){
+        if(any(!is.na(match(dat$pop1,dat$pop2)))){
+          # Fit model
+          mod <- lFormula(response ~ resistance + (1 | pop1),
+              data = dat,
+              REML = REML)
           mod$reTrms$Zt <- ZZ
+        }else{
+          mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
+               data = dat,
+               REML = REML)
         }
         
         dfun <- do.call(mkLmerDevfun, mod)
@@ -235,15 +248,17 @@ MLPE.lmm_coef <-
         # Assign value to layer
         LAYER <- assign(resist.names[i], value = dat$cs.matrix)
         
-        # Fit model
-        mod <-
-          lFormula(response ~ LAYER + (1 | pop1),
-                   data = dat,
-                   REML = TRUE)
-        if(addZZ){
-          mod$reTrms$Zt <- ZZ
-        }
-        
+       if(any(!is.na(match(dat$pop1,dat$pop2)))){
+         # Fit model
+         mod <- lFormula(response ~ resistance + (1 | pop1),
+              data = dat,
+              REML = REML)
+         mod$reTrms$Zt <- ZZ
+       }else{
+         mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
+               data = dat,
+               REML = REML)
+       }        
         dfun <- do.call(mkLmerDevfun, mod)
         opt <- optimizeLmer(dfun)
         Mod.Summary <-
