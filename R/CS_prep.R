@@ -84,6 +84,7 @@ CS.prep <- function(n.Pops,
     ID <- pairs_to_include
     ID$pop1 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2)))) # Necessary for ZZ
     ID$pop2 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2))))
+    pairs_to_include <- "pairs_to_include.txt"
     
   } # close pairs to include statement
   
@@ -105,7 +106,7 @@ CS.prep <- function(n.Pops,
     Neighbor.Connect = Neighbor.Connect,
     n.Pops = n.Pops,
     platform = platform,
-    pairs_to_include = ID,
+    pairs_to_include = pairs_to_include,
     parallel = parallel,
     cores = cores
   )
