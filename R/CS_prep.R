@@ -105,7 +105,7 @@ CS.prep <- function(n.Pops,
     Neighbor.Connect = Neighbor.Connect,
     n.Pops = n.Pops,
     platform = platform,
-    pairs_to_include = "pairs_to_include.txt",
+    pairs_to_include = ID,
     parallel = parallel,
     cores = cores
   )
