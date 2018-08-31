@@ -82,14 +82,20 @@ CS.prep <- function(n.Pops,
     write.table(pairs_to_include,"pairs_to_include.txt",quote = F,row.names = F)
     colnames(pairs_to_include) <- c("pop1","pop2")
     ID <- pairs_to_include
-
+    ID$pop1 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2)))) # Necessary for ZZ
+    ID$pop2 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2))))
+    
   } # close pairs to include statement
   
-  # Make to-from population list
+  # Make to-from population list if include is null
   if (!exists(x = "ID")) {
     ID <- To.From.ID(n.Pops)
   }
+  
+  # Make ZZ Mat
   suppressWarnings(ZZ <- ZZ.mat(ID))
+  
+  # Make input list
   list(
     ID = ID,
     ZZ = ZZ,
