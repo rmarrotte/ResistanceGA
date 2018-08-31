@@ -139,7 +139,8 @@ Resistance.Opt_single <-
                 response = CS.inputs$response,
                 ID = CS.inputs$ID,
                 ZZ = CS.inputs$ZZ,
-                REML = FALSE
+                REML = FALSE,
+                addZZ = GA.inputs$addZZ
               )
             ))
             obj.func.opt <- obj.func * -1
@@ -152,7 +153,8 @@ Resistance.Opt_single <-
                     CS.inputs$response,
                   ID = CS.inputs$ID,
                   ZZ = CS.inputs$ZZ,
-                  REML = FALSE
+                  REML = FALSE,
+                  addZZ = GA.inputs$addZZ
                 )
               ))
             obj.func.opt <- obj.func[[1]]
@@ -164,7 +166,8 @@ Resistance.Opt_single <-
                 response = CS.inputs$response,
                 ID = CS.inputs$ID,
                 ZZ = CS.inputs$ZZ,
-                REML = FALSE
+                REML = FALSE,
+                addZZ = GA.inputs$addZZ
               )
             ))
             obj.func.opt <- obj.func[[1]]
