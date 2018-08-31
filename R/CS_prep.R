@@ -42,7 +42,7 @@
 
 CS.prep <- function(n.Pops,
                     response = NULL,
-                    CS_Point.File,
+                    sites_sp,
                     CS.program = '"C:/Program Files/Circuitscape/cs_run.exe"',
                     Neighbor.Connect = 8,
                     pairs_to_include = NULL,
@@ -50,29 +50,19 @@ CS.prep <- function(n.Pops,
                     parallel = FALSE,
                     cores = NULL) {
   CS.exe_Test <- gsub("\"", "", CS.program)
-  # Error messages
-  if (!file.exists(CS_Point.File)) {
-    stop("The specified CS_Point.File does not exist")
-  }
+  
+  # CS path
   if (platform == 'pc') {
     if (!file.exists(gsub("\"", "", CS.program))) {
       stop("The specified path to 'cs_run.exe' is incorrect")
     }
   }
-  if (grepl(".asc", x = CS_Point.File)) {
-    CS_grid <- raster <- raster(CS_Point.File)
-    CS_Point.txt <- rasterToPoints(x = CS_grid)
-    site <- CS_Point.txt[, 3]
-    CS_Point.txt <- data.frame(site, CS_Point.txt[, c(1, 2)])
-    CS_Point.txt <- CS_Point.txt[order(site), ]
-    CS_Point.File <- sub(".asc", ".txt", x = CS_Point.File)
-    write.table(
-      CS_Point.txt,
-      file = CS_Point.File,
-      col.names = F,
-      row.names = F
-    )
-  }
+  
+  # Point file
+  sites_df <- data.frame("ID"=1:length(sites_sp),coordinates(sites_sp))
+  write.table(sites_df,"sites.txt", row.names = F, col.names = F)
+  
+  # response data
   if (!is.null(response)) {
     TEST.response <- (is.vector(response) || ncol(response) == 1)
     if (TEST.response == FALSE) {
@@ -85,54 +75,12 @@ CS.prep <- function(n.Pops,
     cores = NULL
   }
   
+  # Take pairs and write them in the CS format to the work dir
   if (!is.null(pairs_to_include)) {
-    if (!file.exists(pairs_to_include)) {
-      stop("The specified pairs_to_include file does not exist")
-    }
-    toMatch <- c("min", "max")
-    if (grep(
-      read.table(
-        file = pairs_to_include,
-        header = F,
-        sep = "\t"
-      )[1, 1],
-      pattern = paste(toMatch, collapse = "|")
-    )) {
-      # Function to make list of observations to include
-      Min.MAX <-
-        read.table(file = pairs_to_include,
-                   header = F,
-                   sep = "\t")[c(1, 2), c(1, 2)]
-      MIN <- Min.MAX[which(Min.MAX[, 1] == "min"), 2]
-      MAX <- Min.MAX[which(Min.MAX[, 1] == "max"), 2]
-      PTI <-
-        read.table(file = pairs_to_include,
-                   header = F,
-                   sep = "\t")[-c(1:3), ]
-      site <- PTI[, 1]
-      PTI <- as.matrix(PTI[, -1])
-      
-      p_t_i <- list()
-      count <- 0
-      for (i in 1:(ncol(PTI) - 1)) {
-        for (j in (i + 1):ncol(PTI)) {
-          if (PTI[j, i] >= MIN && PTI[j, i] <= MAX) {
-            count <- count + 1
-            p_t_i[[count]] <- data.frame(i, j)
-          } # close if statement
-        } # close j loop
-      } # close i loop
-      ID <- plyr::ldply(p_t_i, .fun = identity)
-      colnames(ID) <- c("pop1", "pop2")
-      #           ID<-arrange(tmp2,as.numeric(pop1),as.numeric(pop2))
-      n1 <- table(ID$pop1)[[1]]
-      p1 <- ID[n1, 1]
-      p2 <- ID[n1, 2]
-      ID[n1, 1] <- p2
-      ID[n1, 2] <- p1
-      ID$pop1 <- factor(ID$pop1)
-      ID$pop2 <- factor(ID$pop2)
-    } # close function
+    colnames(pairs_to_include) <- c("mode","include")
+    pairs_to_include <- pairs_to_include[order(pairs_to_include$mode,pairs_to_include$include),]
+    write.table(pairs_to_include,"pairs_to_include.txt",quote = F,row.names = F)
+
   } # close pairs to include statement
   
   # Make to-from population list
@@ -144,12 +92,12 @@ CS.prep <- function(n.Pops,
     ID = ID,
     ZZ = ZZ,
     response = response,
-    CS_Point.File = CS_Point.File,
+    CS_Point.File = "sites.txt",
     CS.program = CS.program,
     Neighbor.Connect = Neighbor.Connect,
     n.Pops = n.Pops,
     platform = platform,
-    pairs_to_include = pairs_to_include,
+    pairs_to_include = "pairs_to_include.txt",
     parallel = parallel,
     cores = cores
   )
