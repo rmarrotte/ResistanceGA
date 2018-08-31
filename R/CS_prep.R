@@ -83,7 +83,7 @@ CS.prep <- function(n.Pops,
     colnames(pairs_to_include) <- c("pop1","pop2")
     ID <- pairs_to_include
     ID$pop1 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2)))) # Necessary for ZZ
-    ID$pop2 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2))))
+    ID$pop2 <- factor(ID$pop2,levels=sort(unique(c(ID$pop1,ID$pop2))))
     pairs_to_include <- "pairs_to_include.txt"
     
   } # close pairs to include statement
