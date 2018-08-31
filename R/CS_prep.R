@@ -80,6 +80,8 @@ CS.prep <- function(n.Pops,
     colnames(pairs_to_include) <- c("mode","include")
     pairs_to_include <- pairs_to_include[order(pairs_to_include$mode,pairs_to_include$include),]
     write.table(pairs_to_include,"pairs_to_include.txt",quote = F,row.names = F)
+    colnames(pairs_to_include) <- c("pop1","pop2")
+    ID <- pairs_to_include
 
   } # close pairs to include statement
   
