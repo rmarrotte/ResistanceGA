@@ -406,7 +406,8 @@ GA.prep <- function(ASCII.dir,
       method = method,
       k.value = k.value,
       seed = seed,
-      quiet = quiet
+      quiet = quiet,
+      addZZ = addZZ
     )
   } else {
     list(
