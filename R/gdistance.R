@@ -76,6 +76,9 @@ gdist.prep <-
       ID <- To.From.ID(n.Pops)
     }
     
+    # Make ZZ Mat
+    suppressWarnings(ZZ <- ZZ.mat(ID))
+    
     (
       ret <-
         list(
