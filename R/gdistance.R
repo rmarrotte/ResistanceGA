@@ -30,7 +30,8 @@ gdist.prep <-
              1 / mean(x),
            directions = 8,
            longlat = FALSE,
-           method = 'commuteDistance') {
+           method = 'commuteDistance',
+           pairs_to_include = NULL) {
     
     if (method != 'commuteDistance') {
       method <- 'costDistance'
@@ -63,8 +64,17 @@ gdist.prep <-
       stop("n.Pops does not equal the number of sample locations")
     }
     
-    ID <- To.From.ID(n.Pops)
-    ZZ <- ZZ.mat(ID)
+    if (!is.null(pairs_to_include)) {
+      colnames(pairs_to_include) <- c("pop1","pop2")
+      ID <- pairs_to_include
+      ID$pop1 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2)))) # Necessary for ZZ
+      ID$pop2 <- factor(ID$pop2,levels=sort(unique(c(ID$pop1,ID$pop2))))
+    }
+  
+    # Make to-from population list if include is null
+    if (!exists(x = "ID")) {
+      ID <- To.From.ID(n.Pops)
+    }
     
     (
       ret <-
@@ -77,7 +87,8 @@ gdist.prep <-
           ZZ = ZZ,
           n.Pops = n.Pops,
           longlat = longlat,
-          method = method
+          method = method,
+          pairs_to_include = pairs_to_include
         )
     )
   }
