@@ -119,8 +119,7 @@ SS_optim <- function(CS.inputs = NULL,
               resistance = paste0(
                 GA.inputs$Results.dir,
                 GA.inputs$layer.names[i],
-                "_resistances.out",
-                addZZ = GA.inputs$addZZ
+                "_resistances.out"
               ),
               pairwise.genetic = CS.inputs$response,
               REML = F,
@@ -135,8 +134,7 @@ SS_optim <- function(CS.inputs = NULL,
               resistance = paste0(
                 GA.inputs$Results.dir,
                 GA.inputs$layer.names[i],
-                "_resistances.out",
-               addZZ = GA.inputs$addZZ
+                "_resistances.out"
               ),
               pairwise.genetic = CS.inputs$response,
               REML = F,
@@ -151,8 +149,7 @@ SS_optim <- function(CS.inputs = NULL,
               resistance = paste0(
                 GA.inputs$Results.dir,
                 GA.inputs$layer.names[i],
-                "_resistances.out",
-                addZZ = GA.inputs$addZZ
+                "_resistances.out"
               ),
               pairwise.genetic = CS.inputs$response,
               REML = F,
@@ -215,8 +212,7 @@ SS_optim <- function(CS.inputs = NULL,
           resistance = paste0(
             GA.inputs$Results.dir,
             GA.inputs$layer.names[i],
-            "_resistances.out",
-            addZZ = GA.inputs$addZZ
+            "_resistances.out"
           ),
           pairwise.genetic = CS.inputs$response,
           REML = TRUE,
@@ -337,8 +333,7 @@ SS_optim <- function(CS.inputs = NULL,
             resistance = paste0(
               GA.inputs$Results.dir,
               GA.inputs$layer.names[i],
-              "_resistances.out",
-              addZZ = GA.inputs$addZZ
+              "_resistances.out"
             ),
             pairwise.genetic = CS.inputs$response,
             REML = TRUE,
@@ -406,8 +401,7 @@ SS_optim <- function(CS.inputs = NULL,
               resistance = paste0(
                 GA.inputs$Results.dir,
                 GA.inputs$layer.names[i],
-                "_resistances.out",
-                addZZ = GA.inputs$addZZ
+                "_resistances.out"
               ),
               pairwise.genetic = CS.inputs$response,
               ID = CS.inputs$ID,
@@ -420,8 +414,7 @@ SS_optim <- function(CS.inputs = NULL,
               resistance = paste0(
                 GA.inputs$Results.dir,
                 GA.inputs$layer.names[i],
-                "_resistances.out",
-                addZZ = GA.inputs$addZZ
+                "_resistances.out"
               ),
               pairwise.genetic = CS.inputs$response,
               ID = CS.inputs$ID,
@@ -435,8 +428,7 @@ SS_optim <- function(CS.inputs = NULL,
                 resistance = paste0(
                   GA.inputs$Results.dir,
                   GA.inputs$layer.names[i],
-                  "_resistances.out",
-                  addZZ = GA.inputs$addZZ
+                  "_resistances.out"
                 ),
                 pairwise.genetic = CS.inputs$response,
                 REML = F,
@@ -497,8 +489,7 @@ SS_optim <- function(CS.inputs = NULL,
             resistance = paste0(
               GA.inputs$Results.dir,
               GA.inputs$layer.names[i],
-              "_resistances.out",
-              addZZ = GA.inputs$addZZ
+              "_resistances.out"
             ),
             pairwise.genetic = CS.inputs$response,
             REML = TRUE,
@@ -529,8 +520,7 @@ SS_optim <- function(CS.inputs = NULL,
               pairwise.genetic = CS.inputs$response,
               REML = FALSE,
               ID = CS.inputs$ID,
-              ZZ = CS.inputs$ZZ,
-              addZZ = GA.inputs$addZZ
+              ZZ = CS.inputs$ZZ
             )
           )
         
@@ -541,8 +531,7 @@ SS_optim <- function(CS.inputs = NULL,
               pairwise.genetic = CS.inputs$response,
               REML = FALSE,
               ID = CS.inputs$ID,
-              ZZ = CS.inputs$ZZ,
-              addZZ = GA.inputs$addZZ
+              ZZ = CS.inputs$ZZ
             )
           )
         
@@ -553,8 +542,7 @@ SS_optim <- function(CS.inputs = NULL,
               pairwise.genetic = CS.inputs$response,
               REML = FALSE,
               ID = CS.inputs$ID,
-              ZZ = CS.inputs$ZZ,
-              addZZ = GA.inputs$addZZ
+              ZZ = CS.inputs$ZZ
             )
           )
         
@@ -563,8 +551,7 @@ SS_optim <- function(CS.inputs = NULL,
           pairwise.genetic = CS.inputs$response,
           REML = TRUE,
           ID = CS.inputs$ID,
-          ZZ = CS.inputs$ZZ,
-          addZZ = GA.inputs$addZZ
+          ZZ = CS.inputs$ZZ
         )
         
         cd.list[[i + 1]] <- cd
