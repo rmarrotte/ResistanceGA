@@ -27,8 +27,7 @@ MLPE.lmm <-
            pairwise.genetic,
            REML = FALSE,
            ID = NULL,
-           ZZ = NULL,
-           scale = TRUE) {
+           ZZ = NULL) {
     response = pairwise.genetic
     
     if (class(resistance)[[1]] == 'dist') {
@@ -118,8 +117,7 @@ MLPE.lmm2 <- function(resistance,
                       response, 
                       REML = FALSE, 
                       ID, 
-                      ZZ, 
-                      addZZ = TRUE) {
+                      ZZ) {
   if (class(resistance)[1] != 'dist') {
     res <- resistance[which(resistance != -1)]
     
@@ -163,7 +161,8 @@ MLPE.lmm_coef <-
            method,
            ID = NULL,
            ZZ = NULL,
-           addZZ = TRUE) {
+           
+           = TRUE) {
     if (method == "cs") {
       response = genetic.dist
       resist.mat <-
