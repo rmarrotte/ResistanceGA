@@ -11,8 +11,7 @@
 #' @author Bill Peterman <Bill.Peterman@@gmail.com>
 Run_gdistance <- function(gdist.inputs, 
                           r, 
-                          scl = TRUE,
-                          pairs_to_include = NULL) {
+                          scl = TRUE) {
   if (class(r)[1] != 'RasterLayer') {
     r <- raster(r)
   }
@@ -25,7 +24,7 @@ Run_gdistance <- function(gdist.inputs,
   )
   
   # All pairs
-  if(is.null(pairs_to_include)){
+  if(is.null(gdist.inputs$pairs_to_include)){
     if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'costDistance') {
       trC <- geoCorrection(tr, "c", scl = scl)
       ret <- costDistance(trC, gdist.inputs$samples)
@@ -38,8 +37,8 @@ Run_gdistance <- function(gdist.inputs,
   }else{ # Specific pairs
     # For each pair
     ret <- c()
-    for(i in 1:dim(pairs_to_include)[1]){
-      pairID <- as.numeric(pairs_to_include[i,])
+    for(i in 1:dim(gdist.inputs$pairs_to_include)[1]){
+      pairID <- as.numeric(gdist.inputs$pairs_to_include[i,])
       pairCoords <- gdist.inputs$samples[pairID,]
       # Commute dist
       if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'costDistance') {
