@@ -11,17 +11,21 @@
 #' @author Bill Peterman <Bill.Peterman@@gmail.com>
 Run_gdistance <- function(gdist.inputs, 
                           r, 
-                          scl = TRUE) {
+                          scl = TRUE,
+                          pairs_to_include = NULL) {
   if (class(r)[1] != 'RasterLayer') {
     r <- raster(r)
   }
   
+   
   tr <- transition(
     x = r,
     transitionFunction = gdist.inputs$transitionFunction,
     directions = gdist.inputs$directions
   )
   
+  # All pairs
+  if(is.null(pairs_to_include)){
     if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'costDistance') {
       trC <- geoCorrection(tr, "c", scl = scl)
       ret <- costDistance(trC, gdist.inputs$samples)
@@ -30,7 +34,24 @@ Run_gdistance <- function(gdist.inputs,
     if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'commuteDistance') {
       trR <- geoCorrection(tr, "r", scl = scl)
       ret <- commuteDistance(trR, gdist.inputs$samples) / 1000
-    } 
-
+    }    
+  }else{ # Specific pairs
+    # For each pair
+    ret <- c()
+    for(i in 1:dim(pairs_to_include)[1]){
+      pairID <- as.numeric(pairs_to_include[i,])
+      pairCoords <- gdist.inputs$samples[pairID,]
+      # Commute dist
+      if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'costDistance') {
+        trC <- geoCorrection(tr, "c", scl = scl)
+        ret <- c(ret,costDistance(trC, pairCoords))
+      }    
+      if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'commuteDistance') {
+        trR <- geoCorrection(tr, "r", scl = scl)
+        ret <- c(ret,commuteDistance(trR, pairCoords) / 1000)
+      }
+    }
+    rm(i)
+  }
   return(ret)
 }
