@@ -40,12 +40,10 @@
 #'
 #' The Linux and Mac versions are in development. Please let me know if you encounter errors.
 
-CS.prep <- function(n.Pops,
-                    response = NULL,
+CS.prep <- function(response_df, #dataframe: pop1, pop2, GD"
                     sites_sp,
                     CS.program = '"C:/Program Files/Circuitscape/cs_run.exe"',
                     Neighbor.Connect = 8,
-                    pairs_to_include = NULL,
                     platform = 'pc',
                     parallel = FALSE,
                     cores = NULL) {
@@ -63,10 +61,10 @@ CS.prep <- function(n.Pops,
   write.table(sites_df,"sites.txt", row.names = F, col.names = F)
   
   # response data
-  if (!is.null(response)) {
-    TEST.response <- (is.vector(response) || ncol(response) == 1)
+  if (!is.null(response_df)) {
+    TEST.response <- ncol(response_df) == 3
     if (TEST.response == FALSE) {
-      stop("The object 'response' is not in the form of a single column vector")
+      stop("The object 'response' is not in the form of a 3 column dataframe: pop1, pop2, GD")
     }
   }
   
@@ -75,36 +73,30 @@ CS.prep <- function(n.Pops,
     cores = NULL
   }
   
-  # Take pairs and write them in the CS format to the work dir
-  if (!is.null(pairs_to_include)) {
-    colnames(pairs_to_include) <- c("mode","include")
-    pairs_to_include <- pairs_to_include[order(pairs_to_include$mode,pairs_to_include$include),]
-    write.table(pairs_to_include,"pairs_to_include.txt",quote = F,row.names = F)
-    colnames(pairs_to_include) <- c("pop1","pop2")
-    ID <- pairs_to_include
-    ID$pop1 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2)))) # Necessary for ZZ
-    ID$pop2 <- factor(ID$pop2,levels=sort(unique(c(ID$pop1,ID$pop2))))
-    pairs_to_include <- "pairs_to_include.txt"
-    
-  } # close pairs to include statement
+  # Sort response df
+  response_df <- response_df[order(response_df$pop1,response_df$pop2),]
+  row.names(response_df) <- NULL 
   
-  # Make to-from population list if include is null
-  if (!exists(x = "ID")) {
-    ID <- To.From.ID(n.Pops)
-  }
+  # Make factors
+  response_df$pop1 <- factor(response_df$pop1,levels=sort(unique(c(response_df$pop1,response_df$pop2)))) # Necessary for ZZ
+  response_df$pop2 <- factor(response_df$pop2,levels=sort(unique(c(response_df$pop1,response_df$pop2))))
+  
+  # Take pairs and write them in the CS format to the work dir
+  pairs_to_include <- response_df[,"pop1","pop2"]
+  colnames(pairs_to_include) <- c("mode","include")
+  write.table(pairs_to_include,"pairs_to_include.txt",quote = F,row.names = F) 
+  pairs_to_include <- "pairs_to_include.txt"  
   
   # Make ZZ Mat
-  suppressWarnings(ZZ <- ZZ.mat(ID))
+  suppressWarnings(ZZ <- ZZ.mat(response_df[,"pop1","pop2"]))
   
   # Make input list
   list(
-    ID = ID,
     ZZ = ZZ,
-    response = response,
+    response_df = response_df,
     CS_Point.File = "sites.txt",
     CS.program = CS.program,
     Neighbor.Connect = Neighbor.Connect,
-    n.Pops = n.Pops,
     platform = platform,
     pairs_to_include = pairs_to_include,
     parallel = parallel,
