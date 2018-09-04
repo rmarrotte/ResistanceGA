@@ -50,117 +50,21 @@ MLPE.lmm <-
   }
 
 MLPE.lmm_coef <-
-  function(resistance, # Path to disk
-           genetic.dist,
+  function(res_list, # List of all distances
+           genetic.dist, # df: pop1, pop2, response
            out.dir = NULL,
-           method,
-           ZZ = NULL) {
-    if (method == "cs") {
-      response = genetic.dist
-      resist.mat <-
-        list.files(resistance, pattern = "*_resistances.out", full.names = TRUE)
-      resist.names <-
-        gsub(pattern = "_resistances.out",
-             "",
-             x = list.files(resistance, pattern = "*_resistances.out"))
-      COEF.Table <- array()
-      for (i in 1:length(resist.mat)) {
-        m <- length(read.table(resist.mat[i])[-1, -1])
-        mm <- read.table(resist.mat[i])[-1, -1]
-        mm <- lower(mm)
-        mm <- mm[which(mm != -1)]
-        
-        if (is.null(ID)) {
-          ID <- To.From.ID(POPS = m)
-          
-        }
-        
-        if (is.null(ZZ)) {
-          ZZ <- ZZ.mat(ID = ID)
-          
-        }
-        
-        resistance <- scale(mm, center = TRUE, scale = TRUE)
-        dat <- data.frame(ID, resistance = resistance, response = response)
-        colnames(dat) <- c("pop1", "pop2", "resistance", "response")
-        
-        # Assign value to layer
-        LAYER <- assign(resist.names[i], value = dat$cs.matrix)
-        
-        if(any(!is.na(match(dat$pop1,dat$pop2)))){
-          # Fit model
-          mod <- lFormula(response ~ resistance + (1 | pop1),
-              data = dat,
-              REML = REML)
-          mod$reTrms$Zt <- ZZ
-        }else{
-          mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
-               data = dat,
-               REML = REML)
-        }
-        
-        dfun <- do.call(mkLmerDevfun, mod)
-        opt <- optimizeLmer(dfun)
-        Mod.Summary <-
-          summary(mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
-        COEF <- Mod.Summary$coefficients
-        row.names(COEF) <- c("Intercept", resist.names[i])
-        COEF.Table <- rbind(COEF.Table, COEF)
-      }
-    } else {
-      response <- genetic.dist
-      resist.mat <-
-        list.files(resistance, pattern = "*_distMat.csv", full.names = TRUE)
-      resist.names <-
-        gsub(pattern = "_distMat.csv",
-             "",
-             x = list.files(resistance, pattern = "*_distMat.csv"))
-      
-      if(length(agrep("_commuteDistance", resist.names)) > 0){
-        resist.names <- plyr::ldply(strsplit(resist.names, "_commuteDistance"))[,1]
-        
-      } else {
-        resist.names <- plyr::ldply(strsplit(resist.names, "_costDistance"))[,1]
-      }
-        
-      
-      COEF.Table <- array()
-      for (i in 1:length(resist.mat)) {
-        cd <- read.csv(resist.mat[i], header = F)
-        mm <- lower(cd)
-        # mm <- lower(cd)
-        m <- dim(cd)[1]
-        ID <- To.From.ID(POPS = m)
-        ZZ <- ZZ.mat(ID = ID)
-        cs.matrix <- scale(mm, center = TRUE, scale = TRUE)
-        cs.unscale <- mm
-        dat <- cbind(ID, cs.matrix, response)
-        
-        # Assign value to layer
-        LAYER <- assign(resist.names[i], value = dat$cs.matrix)
-        
-       if(any(!is.na(match(dat$pop1,dat$pop2)))){
-         # Fit model
-         mod <- lFormula(response ~ resistance + (1 | pop1),
-              data = dat,
-              REML = REML)
-         mod$reTrms$Zt <- ZZ
-       }else{
-         mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
-               data = dat,
-               REML = REML)
-       }        
-        dfun <- do.call(mkLmerDevfun, mod)
-        opt <- optimizeLmer(dfun)
-        Mod.Summary <-
-          summary(mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
-        COEF <- Mod.Summary$coefficients
-        row.names(COEF) <- c("Intercept", resist.names[i])
-        COEF.Table <- rbind(COEF.Table, COEF)
-      }
+           ZZ) {
+    
+    COEF.Table <- array()
+    for (i in 1:length(res_list)) {
+      dat <- res_list[[i]]
+      MOD <- MLPE.lmm(results_df=dat,ZZ=ZZ)
+      Mod.Summary <- summary(MOD)
+      COEF <- Mod.Summary$coefficients
+      row.names(COEF) <- c("Intercept", resist.names[i])
+      COEF.Table <- rbind(COEF.Table, COEF)
     }
-    
-    
+        
     if (is.null(out.dir)) {
       COEF.Table <- (COEF.Table[-1, ])
     } else {
@@ -170,8 +74,7 @@ MLPE.lmm_coef <-
         file = paste0(out.dir, "MLPE_coeff_Table.csv"),
         sep = ",",
         row.names = T,
-        col.names = NA
-      )
+        col.names = NA)
       return(COEF.Table)
     }
-  }
+ }
