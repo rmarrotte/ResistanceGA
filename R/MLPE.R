@@ -21,34 +21,26 @@
 #' @references Clarke, R. T., P. Rothery, and A. F. Raybould. 2002. Confidence limits for regression relationships between distance matrices: Estimating gene flow with distance. Journal of Agricultural, Biological, and Environmental Statistics 7:361-372.
 
 MLPE.lmm <-
-  function(resistance, # assume resistance is a 3 column df: Pop1, Pop2, Resistance
-           pairwise.genetic, # Assume it is a 3 column df: Pop1, Pop2, GD
+  function(results_df, # assume resistance is a 4 column df: Pop1, Pop2, response, resistance
            REML = FALSE,
            ZZ,
-           scale = TRUE) {
-    
-    # Merge resistance and pairwise.genetic
-    dat <- merge(pairwise.genetic,resistance,by=c("pop1","pop2")) 
-    colnames(dat) <- c("pop1", "pop2", "response", "resistance") 
-    
-    # If -1 resistance remove that column
-    dat <- dat[dat$resistance != -1,]
+           scale = T) {
     
     # Scale?      
-    if(scale == T) {
-      dat$resistance <- scale(dat$resistance, center = TRUE, scale = TRUE)
+    if(scale) {
+      results_df$resistance <- scale(results_df$resistance, center = TRUE, scale = TRUE)
     }       
     
     # If pops are not BOTH found in pop1 and pop2, ignore the ZZ mat
-    if(any(!is.na(match(dat$pop1,dat$pop2)))){
+    if(any(!is.na(match(results_df$pop1,results_df$pop2)))){
       # Fit model
       mod <- lFormula(response ~ resistance + (1 | pop1),
-              data = dat,
+              data = results_df,
               REML = REML)
       mod$reTrms$Zt <- ZZ
     }else{
       mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
-               data = dat,
+               data = results_df,
                REML = REML)
     }
     dfun <- do.call(mkLmerDevfun, mod)
@@ -57,44 +49,11 @@ MLPE.lmm <-
     return(MOD)
   }
 
-
-MLPE.lmm2 <- function(resistance, # assume resistance is a 3 column df: Pop1, Pop2, Resistance
-                      response, # Assume it is a 3 column df: Pop1, Pop2, GD
-                      REML = FALSE, 
-                      ZZ) {
-  # Merge resistance and pairwise.genetic
-  dat <- merge(pairwise.genetic,resistance,by=c("pop1","pop2")) 
-  colnames(dat) <- c("pop1", "pop2", "response", "resistance")    
-    
-  # If -1 resistance remove that column
-  dat <- dat[dat$resistance != -1,] 
- 
-   # Fit model
-  if(any(!is.na(match(dat$pop1,dat$pop2)))){
-      # Fit model
-      mod <- lFormula(response ~ resistance + (1 | pop1),
-              data = dat,
-              REML = REML)
-      mod$reTrms$Zt <- ZZ
-   }else{
-      mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
-               data = dat,
-               REML = REML)
-   } 
-  dfun <- do.call(mkLmerDevfun, mod)
-  opt <- optimizeLmer(dfun)
-  MOD <-
-    (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
-  return(MOD)
-}
-
-
 MLPE.lmm_coef <-
-  function(resistance,
+  function(resistance, # Path to disk
            genetic.dist,
            out.dir = NULL,
            method,
-           ID = NULL,
            ZZ = NULL) {
     if (method == "cs") {
       response = genetic.dist
