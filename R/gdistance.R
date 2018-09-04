@@ -23,75 +23,44 @@
 #'                   method = 'commuteDistance')
 
 gdist.prep <-
-  function(n.Pops,
-           response = NULL,
-           samples,
-           transitionFunction = function(x)
-             1 / mean(x),
+  function(response_df, # dataframe: pop1, pop2, GD"
+           sites_sp,
+           transitionFunction = function(x) 1 / mean(x),
            directions = 8,
            longlat = FALSE,
-           method = 'commuteDistance',
-           pairs_to_include = NULL) {
+           method = 'commuteDistance') {
+    
     
     if (method != 'commuteDistance') {
       method <- 'costDistance'
     }
     
-    if (!is.null(response)) {
-      TEST.response <- is.vector(response)
+    # response data
+    if (!is.null(response_df)) {
+      TEST.response <- ncol(response_df) == 3
       if (TEST.response == FALSE) {
-        stop("The object 'response' is not in the form of a single column vector")
+        stop("The object 'response' is not in the form of a 3 column dataframe: pop1, pop2, GD")
       }
-    }
+    }     
     
-    if (class(samples)[1] == 'matrix') {
-      if (ncol(samples) > 2) {
-        stop("The specified matrix with xy coordinates has too many columns")
-      }
-      sp <- SpatialPoints(samples)
-    } else if (class(samples)[1] == 'SpatialPoints') {
-      sp <- samples
-    } else {
-      #   grepl(".txt", x = samples)){
-      if (!file.exists(samples)) {
-        stop("The path to the specified samples.txt file is incorrect")
-      }
-      sp <- SpatialPoints(read.delim(samples, header = F)[,-1])
-      
-    }
     
-    if (n.Pops != length(sp)) {
-      stop("n.Pops does not equal the number of sample locations")
-    }
-    
-    if (!is.null(pairs_to_include)) {
-      colnames(pairs_to_include) <- c("pop1","pop2")
-      ID <- pairs_to_include
-      ID$pop1 <- factor(ID$pop1,levels=sort(unique(c(ID$pop1,ID$pop2)))) # Necessary for ZZ
-      ID$pop2 <- factor(ID$pop2,levels=sort(unique(c(ID$pop1,ID$pop2))))
-    }
+    # Sort response df
+    response_df <- response_df[order(response_df$pop1,response_df$pop2),]
+    row.names(response_df) <- NULL 
   
-    # Make to-from population list if include is null
-    if (!exists(x = "ID")) {
-      ID <- To.From.ID(n.Pops)
-    }
+    # Make factors
+    response_df$pop1 <- factor(response_df$pop1,levels=sort(unique(c(response_df$pop1,response_df$pop2)))) # Necessary for ZZ
+    response_df$pop2 <- factor(response_df$pop2,levels=sort(unique(c(response_df$pop1,response_df$pop2))))    
     
     # Make ZZ Mat
-    suppressWarnings(ZZ <- ZZ.mat(ID))
+    suppressWarnings(ZZ <- ZZ.mat(response_df[,"pop1","pop2"]))
     
-    (
-      ret <-
-        list(
-          response = response,
-          samples = sp,
-          transitionFunction = transitionFunction,
-          directions = directions,
-          ID = ID,
-          ZZ = ZZ,
-          n.Pops = n.Pops,
-          longlat = longlat,
-          method = method,
-          pairs_to_include = pairs_to_include
-        )
-    )
+    ret <- list(response_df = response_df,
+                sites_sp = sites_sp,
+                transitionFunction = transitionFunction,
+                directions = directions,
+                ZZ = ZZ,
+                longlat = longlat,
+                method = method)
+   
   }
