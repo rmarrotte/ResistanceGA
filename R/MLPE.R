@@ -17,83 +17,27 @@
 #' @usage MLPE.lmm(resistance, 
 #'                 pairwise.genetic, 
 #'                 REML = FALSE, 
-#'                 ID = NULL, 
-#'                 ZZ = NULL,
 #'                 scale = TRUE)
 #' @references Clarke, R. T., P. Rothery, and A. F. Raybould. 2002. Confidence limits for regression relationships between distance matrices: Estimating gene flow with distance. Journal of Agricultural, Biological, and Environmental Statistics 7:361-372.
 
 MLPE.lmm <-
-  function(resistance,
-           pairwise.genetic,
+  function(resistance, # assume resistance is a 3 column df: Pop1, Pop2, Resistance
+           pairwise.genetic, # Assume it is a 3 column df: Pop1, Pop2, GD
            REML = FALSE,
-           ID = NULL,
-           ZZ = NULL,
+           ZZ,
            scale = TRUE) {
-    response = pairwise.genetic
     
-    if (class(resistance)[[1]] == 'dist') {
-      mm <- as.vector(resistance)
-      m <- attr(resistance, "Size")
-      mm <- mm[which(mm != -1)]
-      
-      if (is.null(ID)) {
-        ID <- To.From.ID(POPS = m)
-      }
-      if (is.null(ZZ)) {
-        ZZ <- ZZ.mat(ID = ID)
-      }
-      
-      if(scale == T) {
-        cs.matrix <- scale(mm, center = TRUE, scale = TRUE)
-      } else {
-        cs.matrix <- mm
-      }
-      
-    } else if(!is.character(resistance)) {
-      mm <- resistance
-      m <- nrow(mm)
-      mm <- lower(mm)
-      mm <- mm[which(mm != -1)]
-      
-      if (is.null(ID)) {
-        ID <- To.From.ID(POPS = m)
-      }
-      if (is.null(ZZ)) {
-        ZZ <- ZZ.mat(ID = ID)
-      }
-      
-      if(scale == T) {
-        cs.matrix <- scale(mm, center = TRUE, scale = TRUE)
-      } else {
-        cs.matrix <- mm
-      }  
-      
-    } else {
-      mm <- (read.table(resistance)[-1, -1])
-      m <- nrow(mm)
-      mm <- lower(mm)
-      mm <- mm[which(mm != -1)]
-      
-      if (is.null(ID)) {
-        ID <- To.From.ID(POPS = m)
-      }
-      if (is.null(ZZ)) {
-        ZZ <- ZZ.mat(ID = ID)
-      }
-      
-      if(scale == T) {
-        cs.matrix <- scale(mm, center = TRUE, scale = TRUE)
-      } else {
-        cs.matrix <- mm
-      }
-    }
+    # Merge resistance and pairwise.genetic
+    dat <- merge(pairwise.genetic,resistance,by=c("pop1","pop2")) 
+    colnames(dat) <- c("pop1", "pop2", "response", "resistance") 
     
-    dat <- data.frame(ID, resistance = cs.matrix, response = response)
-    colnames(dat) <- c("pop1", "pop2", "resistance", "response")
+    # If -1 resistance remove that column
+    dat <- dat[dat$resistance != -1,]
     
-    # Assign value to layer
-    #     LAYER<-assign("Resist",value=dat$cs.matrix)  
-   
+    # Scale?      
+    if(scale == T) {
+      dat$resistance <- scale(dat$resistance, center = TRUE, scale = TRUE)
+    }       
     
     # If pops are not BOTH found in pop1 and pop2, ignore the ZZ mat
     if(any(!is.na(match(dat$pop1,dat$pop2)))){
@@ -114,28 +58,18 @@ MLPE.lmm <-
   }
 
 
-MLPE.lmm2 <- function(resistance, 
-                      response, 
+MLPE.lmm2 <- function(resistance, # assume resistance is a 3 column df: Pop1, Pop2, Resistance
+                      response, # Assume it is a 3 column df: Pop1, Pop2, GD
                       REML = FALSE, 
-                      ID, 
                       ZZ) {
-  if (class(resistance)[1] != 'dist') {
-    res <- resistance[which(resistance != -1)]
+  # Merge resistance and pairwise.genetic
+  dat <- merge(pairwise.genetic,resistance,by=c("pop1","pop2")) 
+  colnames(dat) <- c("pop1", "pop2", "response", "resistance")    
     
-    dat <- data.frame(ID, resistance = res, response = response)
-    colnames(dat) <- c("pop1", "pop2", "resistance", "response")
-  } else {
-    resistance <- as.vector(resistance)
-    resistance <- resistance[which(resistance != -1)]
-    
-    dat <- data.frame(ID, resistance = resistance, response = response)
-    colnames(dat) <- c("pop1", "pop2", "resistance", "response")
-    
-  }
-  # Assign value to layer
-  #   LAYER<-assign("Resist",value=dat$resistance)
-  
-  # Fit model
+  # If -1 resistance remove that column
+  dat <- dat[dat$resistance != -1,] 
+ 
+   # Fit model
   if(any(!is.na(match(dat$pop1,dat$pop2)))){
       # Fit model
       mod <- lFormula(response ~ resistance + (1 | pop1),
