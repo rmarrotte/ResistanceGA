@@ -132,45 +132,23 @@ Resistance.Opt_single <-
             )
           
           # Run mixed effect model on each Circuitscape effective resistance
-          if (method == "AIC") {
-            obj.func <- suppressWarnings(AIC(
-              MLPE.lmm2(
-                resistance = CS.resist,
-                response = CS.inputs$response,
-                ID = CS.inputs$ID,
-                ZZ = CS.inputs$ZZ,
-                REML = FALSE
-              )
-            ))
+          mod_mlpe <- suppressWarnings(MLPE.lmm2(results_df = CS.resist,
+                        ZZ = CS.inputs$ZZ,
+                        REML = FALSE,
+                        scale = F))
+          
+          if (method == "AIC") {            
+            obj.func <- suppressWarnings(AIC(mod_mlpe))
             obj.func.opt <- obj.func * -1
           } else if (method == "R2") {
-            obj.func <-
-              suppressWarnings(r.squaredGLMM(
-                MLPE.lmm2(
-                  resistance = CS.resist,
-                  response =
-                    CS.inputs$response,
-                  ID = CS.inputs$ID,
-                  ZZ = CS.inputs$ZZ,
-                  REML = FALSE
-                )
-              ))
+            obj.func <- suppressWarnings(r.squaredGLMM(mod_mlpe))
             obj.func.opt <- obj.func[[1]]
             
           } else {
-            obj.func <- suppressWarnings(logLik(
-              MLPE.lmm2(
-                resistance = CS.resist,
-                response = CS.inputs$response,
-                ID = CS.inputs$ID,
-                ZZ = CS.inputs$ZZ,
-                REML = FALSE
-              )
-            ))
+            obj.func <- suppressWarnings(logLik(mod_mlpe))
             obj.func.opt <- obj.func[[1]]
           }
-        } # End CS Loop 
-        
+        } # End CS Loop         
         
         
         # gdistance ------------------------------------------------------------
@@ -189,39 +167,19 @@ Resistance.Opt_single <-
             
           } else { # Continue with iteration
             
+            mod_mlpe <- suppressWarnings(MLPE.lmm2(results_df = cd,
+                        ZZ = gdist.inputs$ZZ,
+                        REML = FALSE,
+                        scale = F))
+            
             if (method == "AIC") {
-              obj.func <- suppressWarnings(AIC(
-                MLPE.lmm2(
-                  resistance = cd,
-                  response = gdist.inputs$response,
-                  ID = gdist.inputs$ID,
-                  ZZ = gdist.inputs$ZZ,
-                  REML = FALSE
-                )
-              ))
+              obj.func <- suppressWarnings(AIC(mod_mlpe))
               obj.func.opt <- obj.func * -1
             } else if (method == "R2") {
-              obj.func <- suppressWarnings(r.squaredGLMM(
-                MLPE.lmm2(
-                  resistance = cd,
-                  response =
-                    gdist.inputs$response,
-                  ID = gdist.inputs$ID,
-                  ZZ = gdist.inputs$ZZ,
-                  REML = FALSE
-                )
-              ))
+              obj.func <- suppressWarnings(r.squaredGLMM(mod_mlpe))
               obj.func.opt <- obj.func[[1]]
             } else {
-              obj.func <- suppressWarnings(logLik(
-                MLPE.lmm2(
-                  resistance = cd,
-                  response = gdist.inputs$response,
-                  ID = gdist.inputs$ID,
-                  ZZ = gdist.inputs$ZZ,
-                  REML = FALSE
-                )
-              ))
+              obj.func <- suppressWarnings(logLik(mod_mlpe))
               obj.func.opt <- obj.func[[1]]
             }
           } # Keep loop
