@@ -23,23 +23,10 @@ Run_gdistance <- function(gdist.inputs,
     directions = gdist.inputs$directions
   )
   
-  # All pairs
-  if(is.null(gdist.inputs$pairs_to_include)){
-    if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'costDistance') {
-      trC <- geoCorrection(tr, "c", scl = scl)
-      ret <- costDistance(trC, gdist.inputs$samples)
-    }
-    
-    if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'commuteDistance') {
-      trR <- geoCorrection(tr, "r", scl = scl)
-      ret <- commuteDistance(trR, gdist.inputs$samples) / 1000
-    }    
-  }else{ # Specific pairs
-    # For each pair
-    ret <- c()
-    for(i in 1:dim(gdist.inputs$pairs_to_include)[1]){
-      pairID <- as.numeric(gdist.inputs$pairs_to_include[i,])
-      pairCoords <- gdist.inputs$samples[pairID,]
+  ret <- c()
+    for(i in 1:dim(gdist.inputs$response_df)[1]){
+      pairID <- as.numeric(gdist.inputs$response_df[i,1:2])
+      pairCoords <- coordinates(gdist.inputs$sites_sp[pairID,])
       # Commute dist
       if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'costDistance') {
         trC <- geoCorrection(tr, "c", scl = scl)
@@ -51,6 +38,21 @@ Run_gdistance <- function(gdist.inputs,
       }
     }
     rm(i)
+  
+  # Merge the results to the response df
+  results_df <- response_df
+  results_df <- data.frame(results_df,"resistance"=ret)
+  
+  # Check for -1 and NA
+  if(any(results_df$resistance == -1)){
+    results_df <- results_df[results_df$resistance != -1,]
+    print("Warning! -1 found in output and removed")
+  }  
+  if(any(is.na(results_df$resistance == -1))){
+    results_df <- results_df[!is.na(results_df$resistance),]
+    print("Warning! NA found in output and removed")
   }
-  return(ret)
+  
+  # Return results
+  return(results_df)
 }
