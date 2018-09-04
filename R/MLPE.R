@@ -50,8 +50,7 @@ MLPE.lmm <-
   }
 
 MLPE.lmm_coef <-
-  function(res_list, # List of all distances
-           genetic.dist, # df: pop1, pop2, response
+  function(res_list, # List of all distances each with df: pop1, pop2, resistance, response           
            out.dir = NULL,
            ZZ) {
     
