@@ -93,6 +93,7 @@ CS.prep <- function(response_df, #dataframe: pop1, pop2, response"
   # Make input list
   list(
     ZZ = ZZ,
+    n.Pops = length(levels(response_df$pop1)),
     response_df = response_df,
     CS_Point.File = "sites.txt",
     CS.program = CS.program,
