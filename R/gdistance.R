@@ -56,6 +56,7 @@ gdist.prep <-
     suppressWarnings(ZZ <- ZZ.mat(response_df[,"pop1","pop2"]))
     
     ret <- list(response_df = response_df,
+                n.Pops = length(levels(response_df$pop1)),
                 sites_sp = sites_sp,
                 transitionFunction = transitionFunction,
                 directions = directions,
