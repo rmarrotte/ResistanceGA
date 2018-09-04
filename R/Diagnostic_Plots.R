@@ -19,88 +19,43 @@
 #' @usage Diagnostic.Plots(resistance.mat, genetic.dist, XLAB,YLAB, plot.dir, type, name, ID, ZZ)
 
 Diagnostic.Plots <-
-  function(resistance.mat,
-           genetic.dist,
+  function(results_df,
            XLAB = "Estimated resistance",
            YLAB = "Genetic distance",
            plot.dir,
            type = "categorical",
            name = NULL,
-           ID = NULL,
-           ZZ = NULL) {
-    if (length(resistance.mat) == 1) {
-      response = genetic.dist
-      if (is.null(name)) {
-        NAME <-
-          gsub(pattern = "*_resistances.out", "", x = (basename(resistance.mat)))
-      }
-      mm <- read.table(resistance.mat)[-1, -1]
-      m <- length(mm)
-      mm <- lower(mm)
-      mm <- mm[which(mm != -1)]
-      
-      if (is.null(ID)) {
-        ID <- To.From.ID(POPS = m)
-      }
-      if (is.null(ZZ)) {
-        ZZ <- ZZ.mat(ID = ID)
-      }
-      
-      cs.matrix <- scale(mm, center = TRUE, scale = TRUE)
-      cs.unscale <- mm
-      dat <- data.frame(ID, cs.matrix = cs.matrix, response = response)
-      colnames(dat) <- c("pop1", "pop2", "cs.matrix", "response")
-      
-      # Assign value to layer
-      LAYER <- assign("LAYER", value = dat$cs.matrix)
-      
-      # Fit model
-      mod <- lFormula(response ~ LAYER + (1 | pop1),
-                      data = dat,
-                      REML = TRUE)
-      mod$reTrms$Zt <- ZZ
-      dfun <- do.call(mkLmerDevfun, mod)
-      opt <- optimizeLmer(dfun)
-      Mod <-
-        (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
-    }
+           ZZ) {
     
-    
-    
-    if (length(resistance.mat) > 1) {
-      response = genetic.dist
-      if (is.null(name)) {
-        stop("Output file 'name' must be specified!!!")
-      }
+    if (is.null(name)) {
+        NAME <- gsub(pattern = "*_resistances.out", "", x = (basename(resistance.mat)))
+    }else{
       NAME <- name
-      mm <- lower(as.matrix(resistance.mat))
-      m <- attr(resistance.mat, "Size")
-      mm <- mm[which(mm != -1)]
-      
-      if (is.null(ID)) {
-        ID <- To.From.ID(POPS = m)
-      }
-      if (is.null(ZZ)) {
-        ZZ <- ZZ.mat(ID = ID)
-      }
-      cs.matrix <- scale(mm, center = TRUE, scale = TRUE)
-      cs.unscale <- mm
-      dat <- data.frame(ID, cs.matrix = cs.matrix, response = response)
-      colnames(dat) <- c("pop1", "pop2", "cs.matrix", "response")
-      
-      # Assign value to layer
-      LAYER <- assign("LAYER", value = dat$cs.matrix)
-      
-      # Fit model
-      mod <- lFormula(response ~ LAYER + (1 | pop1),
-                      data = dat,
-                      REML = TRUE)
-      mod$reTrms$Zt <- ZZ
-      dfun <- do.call(mkLmerDevfun, mod)
-      opt <- optimizeLmer(dfun)
-      Mod <-
-        (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
     }
+    
+    # scale and keep
+    results_df$cs.unscale <- results_df$resistance
+    results_df <- scale(results_df$resistance, center = TRUE, scale = TRUE)     
+     
+    # Assign value to layer
+    LAYER <- assign("LAYER", value = results_df$resistance)
+      
+   # If pops are not BOTH found in pop1 and pop2, ignore the ZZ mat
+    if(any(!is.na(match(results_df$pop1,results_df$pop2)))){
+      # Fit model
+      mod <- lFormula(response ~ resistance + (1 | pop1),
+              data = results_df,
+              REML = REML)
+      mod$reTrms$Zt <- ZZ
+    }else{
+      mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
+               data = results_df,
+               REML = REML)
+    }
+    dfun <- do.call(mkLmerDevfun, mod)
+    opt <- optimizeLmer(dfun)
+    MOD <- (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
+    
     #######
     # Make diagnostic plots
     if (type == "categorical") {
@@ -138,14 +93,14 @@ Diagnostic.Plots <-
         oma = c(0, 4, 0, 0) + 0.1,
         mar = c(4, 4, 1, 1) + 0.1
       )
-      plot(dat$response ~ cs.unscale,
+      plot(results_df$response ~ results_df$cs.unscale,
            xlab = XLAB,
            ylab = YLAB)
-      abline(lm(dat$response ~ cs.unscale))
-      plot(residuals(Mod) ~ cs.unscale,
+      abline(lm(results_df$response ~ results_df$cs.unscale))
+      plot(residuals(Mod) ~ results_df$cs.unscale,
            xlab = XLAB,
            ylab = "Residuals")
-      abline(lm(residuals(Mod) ~ cs.unscale))
+      abline(lm(residuals(Mod) ~ results_df$cs.unscale))
       hist(residuals(Mod), xlab = "Residuals", main = "")
       qqnorm(resid(Mod), main = "")
       qqline(resid(Mod))
