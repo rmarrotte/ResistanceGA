@@ -49,8 +49,8 @@ Run_gdistance <- function(gdist.inputs,
     print("Warning! -1 found in output and removed")
   }  
   if(any(is.na(results_df$resistance == -1))){
-    results_df <- results_df[!is.na(results_df$resistance),]
-    print("Warning! NA found in output and removed")
+    results_df[is.na(results_df$resistance)] <- 0
+    print("Warning! NA found in output and replaced with 0")
   }
   
   # Return results
