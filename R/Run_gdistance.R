@@ -40,7 +40,7 @@ Run_gdistance <- function(gdist.inputs,
     rm(i)
   
   # Merge the results to the response df
-  results_df <- response_df
+  results_df <- gdist.inputs$response_df
   results_df <- data.frame(results_df,"resistance"=ret)
   
   # Check for -1 and NA
