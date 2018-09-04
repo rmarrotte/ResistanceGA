@@ -40,7 +40,7 @@
 #'
 #' The Linux and Mac versions are in development. Please let me know if you encounter errors.
 
-CS.prep <- function(response_df, #dataframe: pop1, pop2, GD"
+CS.prep <- function(response_df, #dataframe: pop1, pop2, response"
                     sites_sp,
                     CS.program = '"C:/Program Files/Circuitscape/cs_run.exe"',
                     Neighbor.Connect = 8,
