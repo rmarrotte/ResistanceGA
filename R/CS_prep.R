@@ -82,7 +82,7 @@ CS.prep <- function(response_df, #dataframe: pop1, pop2, response"
   response_df$pop2 <- factor(response_df$pop2,levels=sort(unique(c(response_df$pop1,response_df$pop2))))
   
   # Take pairs and write them in the CS format to the work dir
-  pairs_to_include <- response_df[,"pop1","pop2"]
+  pairs_to_include <- response_df[,c("pop1","pop2")]
   colnames(pairs_to_include) <- c("mode","include")
   write.table(pairs_to_include,"pairs_to_include.txt",quote = F,row.names = F) 
   pairs_to_include <- "pairs_to_include.txt"  
