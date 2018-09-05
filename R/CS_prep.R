@@ -2,7 +2,7 @@
 #'
 #' This function will prepare objects needed for running optimization functions
 #'
-#' @param n.Pops The number of populations that are being assessed
+#' @param n.Pops The number of populations that are being assessed sdf
 #' @param response Vector of pairwise genetic distances (lower half of pairwise matrix).
 #' @param CS_Point.File The path to the Circuitscape formatted point file. See Circuitscape documentation for help.
 #' @param CS.program The path to the CIRCUITSCAPE executable file (cs_run.exe) on a Windows PC. If using a Linux or Mac system, provide the full path to the "csrun.py" file. See details below.
