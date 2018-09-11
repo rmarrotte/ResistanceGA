@@ -24,37 +24,17 @@ Diagnostic.Plots <-
            YLAB = "Genetic distance",
            plot.dir,
            type = "categorical",
-           name = NULL,
+           NAME = "res",
            ZZ) {
-    
-    if (is.null(name)) {
-        NAME <- gsub(pattern = "*_resistances.out", "", x = (basename(resistance.mat)))
-    }else{
-      NAME <- name
-    }
     
     # scale and keep
     results_df$cs.unscale <- results_df$resistance
-    results_df <- scale(results_df$resistance, center = TRUE, scale = TRUE)     
-     
-    # Assign value to layer
-    LAYER <- assign("LAYER", value = results_df$resistance)
-      
-   # If pops are not BOTH found in pop1 and pop2, ignore the ZZ mat
-    if(any(!is.na(match(results_df$pop1,results_df$pop2)))){
-      # Fit model
-      mod <- lFormula(response ~ resistance + (1 | pop1),
-              data = results_df,
-              REML = REML)
-      mod$reTrms$Zt <- ZZ
-    }else{
-      mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
-               data = results_df,
-               REML = REML)
-    }
-    dfun <- do.call(mkLmerDevfun, mod)
-    opt <- optimizeLmer(dfun)
-    MOD <- (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
+
+    # Run model
+    Mod <- MLPE.lmm(results_df = results_df,
+                    REML = F, 
+                    ZZ = ZZ, 
+                    scale = T)
     
     #######
     # Make diagnostic plots

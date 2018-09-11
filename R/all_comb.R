@@ -26,68 +26,31 @@
 #'                 null_mod = TRUE)
 #' @author Bill Peterman <Bill.Peterman@@gmail.com>
 #' @export
-all_comb <- function(gdist.inputs,
+all_comb <- function(gdist.inputs = NULL,
+                     CS.inputs = NULL,
                      GA.inputs,
                      results.dir,
                      max.combination = 4,
                      iters = 1000,
                      replicate = 1,
                      sample.prop = 0.75,
-                     nlm = FALSE,
                      dist_mod = TRUE,
                      null_mod = TRUE) {
   
-  if(!exists('results.dir')) 
-    return(cat("ERROR: An empty results directory must be specified"))
-  
-  if(!exists('gdist.inputs')) 
-    return(cat("ERROR: Please specify gdist.inputs"))
-  
   if(!exists('GA.inputs')) 
     return(cat("ERROR: Please specify GA.inputs"))
-  
-  if(!is.null(GA.inputs$Results.dir) & 
-     !is.null(GA.inputs$Write.dir) &
-     !is.null(GA.inputs$Plots.dir)) {
-    return(cat("ERROR: Please correctly specify the `Results.dir` as 'all.comb' when running GA.prep"))
-  }
   
   if(length(max.combination) > 2) {
     return(cat("ERROR: Please specify either a single value or a vector with the minimum and maximum value"))
   }
   
-  dir.files <- list.files(results.dir)
-  if(length(dir.files) != 0) {
-    q <- yn.question(cat(
-      paste0("This function is about to delete all files and folders in '", results.dir, "'"),
-      '\n', '\n',
-      paste0("Do you want to proceed? Select 1 (Yes), 2 (No), or 3 (create a new subdirectory),  then press [Enter]")))
-    
-    # if(q == FALSE) return(cat("Function stopped"))
-    
-    if(is.na(q)) { # Create subdir
-      dir.NAME <- floor(as.numeric(as.POSIXct(Sys.time())))
-      dir.create(path = paste0(results.dir, "all_comb_", dir.NAME))
-      results.dir <- paste0(results.dir, "all_comb_", dir.NAME, "/")
-    } else if(q == FALSE) { # Stop function
-      return(cat("Function stopped"))
-    } else { # Remove exisiting folder
-      unlink(dir(results.dir, 
-                 full.names = TRUE),
-             recursive = TRUE,
-             force = T
-      )
-    }
-  }
-  
- 
-  
-  # if(length(max.combination) == 2) {
-  #   if(max.combination[2] > GA.inputs$n.layers) {
-  #     return(cat("ERROR: Please specify a maximum combination that is less than or equal to the number of raster layers in the analysis"))
-  #   }
-  # }
-
+  # Create workdir
+  unlink(results.dir, recursive = T,force = T) # Clear it first
+  dir.create(results.dir) # Create it
+  results.dir <- paste0(results.dir,"/")
+  dir.NAME <- floor(as.numeric(as.POSIXct(Sys.time())))
+  dir.create(path = paste0(results.dir, "all_comb_", dir.NAME))
+  results.dir <- paste0(results.dir, "all_comb_", dir.NAME, "/")
   
   # Create combination list -------------------------------------------------
   mc <- max.combination
@@ -160,342 +123,162 @@ all_comb <- function(gdist.inputs,
       dir.create(paste0(results.dir,'rep_',i))
       dir.create(paste0(results.dir,'rep_',i, "/", "single.surface"))
       dir.create(paste0(results.dir,'rep_',i, "/", "single.surface/", "Plots"))
-      
       # Single Surface optimization -----------------------------------------------------
-      if(!is.null(GA.inputs$scale)) {
-        
-        # * Single Surface: scaled --------------------------------------------------------
-        
-        # Update GA.input directories
-        GA.inputs$Plots.dir <- paste0(results.dir,
+      # Update GA.input directories
+      GA.inputs$Plots.dir <- paste0(results.dir,
+                                    'rep_',i, 
+                                    "/",
+                                    "single.surface/",
+                                    "Plots/")
+      
+      GA.inputs$Results.dir <- paste0(results.dir,
                                       'rep_',i, 
-                                      "/",
-                                      "single.surface/",
-                                      "Plots/")
-        
-        GA.inputs$Results.dir <- paste0(results.dir,
-                                        'rep_',i, 
-                                        "/", 
-                                        "single.surface/")
-        
-        ss.results <- SS_optim.scale(gdist.inputs = gdist.inputs,
-                                     GA.inputs = GA.inputs,
-                                     nlm = nlm,
-                                     dist_mod = dist_mod,
-                                     null_mod = null_mod)
-        
-        AICc.tab <- ss.results$AICc 
+                                      "/", 
+                                      "single.surface/")
+      
+      ss.results <- SS_optim(gdist.inputs = gdist.inputs,
+                             CS.inputs = CS.inputs,
+                             GA.inputs = GA.inputs,
+                             dist_mod = dist_mod,
+                             null_mod = null_mod)
+      
+      AICc.tab <- ss.results$AICc
+    }
+    # Multisurface optimization -----------------------------------------------
+    ms.cd <- vector(mode = 'list',
+                    length = length(all.combs))
+    
+    ms.k <- vector(mode = 'list',
+                   length = length(all.combs))
+    
+    AICc.tab_list <- vector(mode = 'list',
+                            length = length(all.combs))
+    
+    ms.results <- vector(mode = "list", length = length(all.combs))
+    
+    n_ss.cd <- length(ss.results$cd)
+    all.cd <- c(ss.results$cd,
+                ms.cd)
+    
+    for(j in 1:length(all.combs)) {
+      dir.create(paste0(results.dir,'rep_',i, "/", comb.names[[j]]))
+      # dir.create(paste0(results.dir,'rep_',i, "/", comb.names[[j]],"/Plots"))
+      
+      # Select raster surfaces
+      r.vec <- 1:GA.input_orig$n.layers
+      drop.vec <- r.vec[!(r.vec %in% all.combs[[j]])]
+      asc.comb <- dropLayer(GA.input_orig$Resistance.stack, drop.vec)
+      
+      if(!is.null(GA.input_orig$inputs$select.trans)) {
+        s.trans <- GA.input_orig$inputs$select.trans[all.combs[[j]]]
       } else {
-        # * Single Surface --------------------------------------------------------
-        
-        # Update GA.input directories
-        GA.inputs$Plots.dir <- paste0(results.dir,
-                                      'rep_',i, 
-                                      "/",
-                                      "single.surface/",
-                                      "Plots/")
-        
-        GA.inputs$Results.dir <- paste0(results.dir,
-                                        'rep_',i, 
-                                        "/", 
-                                        "single.surface/")
-        
-        ss.results <- SS_optim(gdist.inputs = gdist.inputs,
-                               GA.inputs = GA.inputs,
-                               nlm = nlm,
-                               dist_mod = dist_mod,
-                               null_mod = null_mod)
-        
-        AICc.tab <- ss.results$AICc
+        s.trans <- GA.input_orig$inputs$select.trans
       }
+      
+      if(is.null(GA.input_orig$inputs$scale)) {
+        ms.scale <- FALSE
+      } else {
+        ms.scale <- TRUE
+      }
+      
+      if(sum(GA.input_orig$inputs$scale.surfaces) == 0) {
+        sc.surf <- NULL
+      } else {
+        sc.surf <- GA.input_orig$inputs$scale.surfaces[all.combs[[j]]]
+      }
+      
+      # sc.surf <- GA.input_orig$inputs$scale.surfaces[all.combs[[j]]]
+      
+      # Update GA.input 
+      GA.inputs <- GA.prep(ASCII.dir = asc.comb,
+                           Results.dir = 'all.comb',
+                           min.cat = GA.input_orig$inputs$min.cat,
+                           max.cat = GA.input_orig$inputs$max.cat,
+                           max.cont = GA.input_orig$inputs$max.cont,
+                           min.scale = GA.input_orig$inputs$min.scale,
+                           max.scale = GA.input_orig$inputs$max.scale,
+                           cont.shape = NULL,
+                           select.trans = s.trans,
+                           method = GA.input_orig$inputs$method,
+                           scale = ms.scale,
+                           scale.surfaces = sc.surf,
+                           k.value = GA.input_orig$inputs$k.value,
+                           pop.mult = GA.input_orig$inputs$pop.mult,
+                           percent.elite = GA.input_orig$inputs$percent.elite,
+                           type = GA.input_orig$inputs$type,
+                           pcrossover = GA.input_orig$inputs$pcrossover,
+                           pmutation = GA.input_orig$inputs$pmutation,
+                           maxiter = GA.input_orig$inputs$maxiter,
+                           run = GA.input_orig$inputs$run,
+                           keepBest = GA.input_orig$inputs$keepBest,
+                           population = GA.input_orig$inputs$population,
+                           selection = GA.input_orig$inputs$selection,
+                           crossover = GA.input_orig$inputs$crossover,
+                           mutation = GA.input_orig$inputs$mutation,
+                           pop.size = GA.input_orig$inputs$pop.size,
+                           parallel = GA.input_orig$inputs$parallel,
+                           seed = GA.input_orig$inputs$seed,
+                           quiet = GA.input_orig$inputs$quiet
+      )
+      
+      # Update GA.input directories
+      GA.inputs$Plots.dir <- paste0(results.dir,
+                                    'rep_',i, 
+                                    "/", 
+                                    comb.names[[j]],
+                                    "/")
+      
+      GA.inputs$Results.dir <- paste0(results.dir,
+                                      'rep_',i, 
+                                      "/", 
+                                      comb.names[[j]],
+                                      "/")
+      
+      ms.results[[j]] <- MS_optim(gdist.inputs = gdist.inputs,
+                                  CS.inputs = CS.inputs,
+                                  GA.inputs = GA.inputs)
+      
+      all.cd[[(j + n_ss.cd)]] <- ms.results[[j]]$cd[[1]]
+      
+      ms.k[[j]] <- ms.results[[j]]$k
+      
+      AICc.tab_list[[j]] <- ms.results[[j]]$AICc.tab
+    } # End combination loop
+    
+    # Convert combination lists to data frames
+    all.k <- rbind(ss.results$k,
+                   plyr::ldply(ms.k))
+    
+    names(all.cd) <- all.k$surface
+    
+    if(is.null(ss.results)) {
+      all.AICc <- plyr::ldply(AICc.tab_list)
+    } else {
+      all.AICc <- rbind(ss.results$AICc,
+                        plyr::ldply(AICc.tab_list))  
     }
     
+    all.AICc <- all.AICc %>% 
+      dplyr::arrange(., AICc) %>%
+      dplyr::mutate(., delta.AICc = AICc - min(AICc)) %>%
+      dplyr::mutate(., weight = (exp(-0.5 * delta.AICc)) / sum(exp(-0.5 * delta.AICc))) %>%
+      as.data.frame()
     
-    # Multisurface optimization -----------------------------------------------
     
-    # * Multisurface: scaled ----------------------------------------------------------
+    # * Bootstrap -----------------------------------------------------
     
-    if(!is.null(GA.inputs$scale)) {
-      
-      ms.cd <- vector(mode = 'list',
-                      length = length(all.combs))
-      
-      ms.k <- vector(mode = 'list',
-                     length = length(all.combs))
-      
-      AICc.tab_list <- vector(mode = 'list',
-                              length = length(all.combs))
-      
-      ms.results <- vector(mode = "list", length = length(all.combs))
-      
-      if(is.null(ss.results)) {
-        n_ss.cd <- 0
-        all.cd <- ms.cd
-      } else {
-        n_ss.cd <- length(ss.results$cd)
-        all.cd <- c(ss.results$cd,
-                    ms.cd)
-      }
-      
-      
-      for(j in 1:length(all.combs)) {
-        dir.create(paste0(results.dir,'rep_',i, "/", comb.names[[j]]))
-        # dir.create(paste0(results.dir,'rep_',i, "/", comb.names[[j]],"/Plots"))
-        
-        # Select raster surfaces
-        r.vec <- 1:GA.input_orig$n.layers
-        drop.vec <- r.vec[!(r.vec %in% all.combs[[j]])]
-        asc.comb <- dropLayer(GA.input_orig$Resistance.stack, drop.vec)
-        
-        if(!is.null(GA.input_orig$inputs$select.trans)) {
-          s.trans <- GA.input_orig$inputs$select.trans[all.combs[[j]]]
-        } else {
-          s.trans <- GA.input_orig$inputs$select.trans
-        }
-        
-        if(is.null(GA.input_orig$inputs$scale)) {
-          ms.scale <- FALSE
-        } else {
-          ms.scale <- TRUE
-        }
-        
-        if(sum(GA.input_orig$inputs$scale.surfaces) == 0) {
-          sc.surf <- NULL
-        } else {
-          sc.surf <- GA.input_orig$inputs$scale.surfaces[all.combs[[j]]]
-        }
-        
-        # sc.surf <- GA.input_orig$inputs$scale.surfaces[all.combs[[j]]]
-        
-        # Update GA.input 
-        GA.inputs <- GA.prep(ASCII.dir = asc.comb,
-                             Results.dir = 'all.comb',
-                             min.cat = GA.input_orig$inputs$min.cat,
-                             max.cat = GA.input_orig$inputs$max.cat,
-                             max.cont = GA.input_orig$inputs$max.cont,
-                             min.scale = GA.input_orig$inputs$min.scale,
-                             max.scale = GA.input_orig$inputs$max.scale,
-                             cont.shape = NULL,
-                             select.trans = s.trans,
-                             method = GA.input_orig$inputs$method,
-                             scale = ms.scale,
-                             scale.surfaces = sc.surf,
-                             k.value = GA.input_orig$inputs$k.value,
-                             pop.mult = GA.input_orig$inputs$pop.mult,
-                             percent.elite = GA.input_orig$inputs$percent.elite,
-                             type = GA.input_orig$inputs$type,
-                             pcrossover = GA.input_orig$inputs$pcrossover,
-                             pmutation = GA.input_orig$inputs$pmutation,
-                             maxiter = GA.input_orig$inputs$maxiter,
-                             run = GA.input_orig$inputs$run,
-                             keepBest = GA.input_orig$inputs$keepBest,
-                             population = GA.input_orig$inputs$population,
-                             selection = GA.input_orig$inputs$selection,
-                             crossover = GA.input_orig$inputs$crossover,
-                             mutation = GA.input_orig$inputs$mutation,
-                             pop.size = GA.input_orig$inputs$pop.size,
-                             parallel = GA.input_orig$inputs$parallel,
-                             seed = GA.input_orig$inputs$seed,
-                             quiet = GA.input_orig$inputs$quiet
-        )
-        
-        # Update GA.input directories
-        GA.inputs$Plots.dir <- paste0(results.dir,
-                                      'rep_',i, 
-                                      "/", 
-                                      comb.names[[j]],
-                                      "/")
-        
-        GA.inputs$Results.dir <- paste0(results.dir,
-                                        'rep_',i, 
-                                        "/", 
-                                        comb.names[[j]],
-                                        "/")
-        
-        ms.results[[j]] <- MS_optim.scale(gdist.inputs = gdist.inputs,
-                                          GA.inputs = GA.inputs)
-        
-        all.cd[[(j + n_ss.cd)]] <- ms.results[[j]]$cd[[1]]
-        
-        ms.k[[j]] <- ms.results[[j]]$k
-        
-        AICc.tab_list[[j]] <- ms.results[[j]]$AICc.tab
-      } # End combination loop
-      
-      # Convert combination lists to data frames
-      all.k <- rbind(ss.results$k,
-                     plyr::ldply(ms.k))
-      
-      names(all.cd) <- all.k$surface
-      
-      if(is.null(ss.results)) {
-        all.AICc <- plyr::ldply(AICc.tab_list)
-      } else {
-        all.AICc <- rbind(ss.results$AICc,
-                          plyr::ldply(AICc.tab_list))  
-      }
-      
-      
-      all.AICc <- all.AICc %>% 
-        dplyr::arrange(., AICc) %>%
-        dplyr::mutate(., delta.AICc = AICc - min(AICc)) %>%
-        dplyr::mutate(., weight = (exp(-0.5 * delta.AICc)) / sum(exp(-0.5 * delta.AICc))) %>%
-        as.data.frame()
-      
-      
-      # * Bootstrap: scaled -----------------------------------------------------
-      
-      obs <- gdist.inputs$n.Pops
-      genetic.mat <- matrix(0, obs, obs)
-      genetic.mat[lower.tri(genetic.mat)] <- gdist.inputs$response
-      
-      boot.results <- Resist.boot(mod.names = all.k[,1],
-                                  dist.mat = all.cd,
-                                  n.parameters = all.k[,2],
-                                  sample.prop = sample.prop,
-                                  iters = iters,
-                                  obs = obs,
-                                  genetic.mat = genetic.mat)      
-    } else {     # End scaled optimization
-      
-      # Optimization without scaling --------------------------------------------
-      
-      # * Multisurface ----------------------------------------------------------
-      
-      ms.cd <- vector(mode = 'list',
-                      length = length(all.combs))
-      
-      ms.k <- vector(mode = 'list',
-                     length = length(all.combs))
-      
-      AICc.tab_list <- vector(mode = 'list',
-                              length = length(all.combs))
-      
-      ms.results <- vector(mode = "list", length = length(all.combs))
-      
-      n_ss.cd <- length(ss.results$cd)
-      all.cd <- c(ss.results$cd,
-                  ms.cd)
-      
-      for(j in 1:length(all.combs)) {
-        dir.create(paste0(results.dir,'rep_',i, "/", comb.names[[j]]))
-        # dir.create(paste0(results.dir,'rep_',i, "/", comb.names[[j]],"/Plots"))
-        
-        # Select raster surfaces
-        r.vec <- 1:GA.input_orig$n.layers
-        drop.vec <- r.vec[!(r.vec %in% all.combs[[j]])]
-        asc.comb <- dropLayer(GA.input_orig$Resistance.stack, drop.vec)
-        
-        if(!is.null(GA.input_orig$inputs$select.trans)) {
-          s.trans <- GA.input_orig$inputs$select.trans[all.combs[[j]]]
-        } else {
-          s.trans <- GA.input_orig$inputs$select.trans
-        }
-        
-        if(is.null(GA.input_orig$inputs$scale)) {
-          ms.scale <- FALSE
-        } else {
-          ms.scale <- TRUE
-        }
-        
-        if(sum(GA.input_orig$inputs$scale.surfaces) == 0) {
-          sc.surf <- NULL
-        } else {
-          sc.surf <- GA.input_orig$inputs$scale.surfaces[all.combs[[j]]]
-        }
-        
-        # sc.surf <- GA.input_orig$inputs$scale.surfaces[all.combs[[j]]]
-        
-        # Update GA.input 
-        GA.inputs <- GA.prep(ASCII.dir = asc.comb,
-                             Results.dir = 'all.comb',
-                             min.cat = GA.input_orig$inputs$min.cat,
-                             max.cat = GA.input_orig$inputs$max.cat,
-                             max.cont = GA.input_orig$inputs$max.cont,
-                             min.scale = GA.input_orig$inputs$min.scale,
-                             max.scale = GA.input_orig$inputs$max.scale,
-                             cont.shape = NULL,
-                             select.trans = s.trans,
-                             method = GA.input_orig$inputs$method,
-                             scale = ms.scale,
-                             scale.surfaces = sc.surf,
-                             k.value = GA.input_orig$inputs$k.value,
-                             pop.mult = GA.input_orig$inputs$pop.mult,
-                             percent.elite = GA.input_orig$inputs$percent.elite,
-                             type = GA.input_orig$inputs$type,
-                             pcrossover = GA.input_orig$inputs$pcrossover,
-                             pmutation = GA.input_orig$inputs$pmutation,
-                             maxiter = GA.input_orig$inputs$maxiter,
-                             run = GA.input_orig$inputs$run,
-                             keepBest = GA.input_orig$inputs$keepBest,
-                             population = GA.input_orig$inputs$population,
-                             selection = GA.input_orig$inputs$selection,
-                             crossover = GA.input_orig$inputs$crossover,
-                             mutation = GA.input_orig$inputs$mutation,
-                             pop.size = GA.input_orig$inputs$pop.size,
-                             parallel = GA.input_orig$inputs$parallel,
-                             seed = GA.input_orig$inputs$seed,
-                             quiet = GA.input_orig$inputs$quiet
-        )
-        
-        # Update GA.input directories
-        GA.inputs$Plots.dir <- paste0(results.dir,
-                                      'rep_',i, 
-                                      "/", 
-                                      comb.names[[j]],
-                                      "/")
-        
-        GA.inputs$Results.dir <- paste0(results.dir,
-                                        'rep_',i, 
-                                        "/", 
-                                        comb.names[[j]],
-                                        "/")
-        
-        ms.results[[j]] <- MS_optim(gdist.inputs = gdist.inputs,
-                                    GA.inputs = GA.inputs)
-        
-        all.cd[[(j + n_ss.cd)]] <- ms.results[[j]]$cd[[1]]
-        
-        ms.k[[j]] <- ms.results[[j]]$k
-        
-        AICc.tab_list[[j]] <- ms.results[[j]]$AICc.tab
-      } # End combination loop
-      
-      # Convert combination lists to data frames
-      all.k <- rbind(ss.results$k,
-                     plyr::ldply(ms.k))
-      
-      names(all.cd) <- all.k$surface
-      
-      if(is.null(ss.results)) {
-        all.AICc <- plyr::ldply(AICc.tab_list)
-      } else {
-        all.AICc <- rbind(ss.results$AICc,
-                          plyr::ldply(AICc.tab_list))  
-      }
-      
-      all.AICc <- all.AICc %>% 
-        dplyr::arrange(., AICc) %>%
-        dplyr::mutate(., delta.AICc = AICc - min(AICc)) %>%
-        dplyr::mutate(., weight = (exp(-0.5 * delta.AICc)) / sum(exp(-0.5 * delta.AICc))) %>%
-        as.data.frame()
-      
-      
-      # * Bootstrap -----------------------------------------------------
-      
-      obs <- gdist.inputs$n.Pops
-      genetic.mat <- matrix(0, obs, obs)
-      genetic.mat[lower.tri(genetic.mat)] <- gdist.inputs$response
-      
-      boot.results <- Resist.boot(mod.names = all.k[,1],
-                                  dist.mat = all.cd,
-                                  n.parameters = all.k[,2],
-                                  sample.prop = sample.prop,
-                                  iters = iters,
-                                  obs = obs,
-                                  genetic.mat = genetic.mat)
-      
-    } # End scaled if-else
+    #obs <- gdist.inputs$n.Pops
+    #genetic.mat <- matrix(0, obs, obs)
+    #genetic.mat[lower.tri(genetic.mat)] <- gdist.inputs$response
+    
+    #boot.results <- Resist.boot(mod.names = all.k[,1],
+    #                            dist.mat = all.cd,
+    #                            n.parameters = all.k[,2],
+    #                            sample.prop = sample.prop,
+    #                            iters = iters,
+    #                            obs = obs,
+    #                            genetic.mat = genetic.mat)
+    
     
     # Write AICc table and Boot Results to replicate results directory
     write.table(x = all.AICc,
@@ -505,19 +288,19 @@ all_comb <- function(gdist.inputs,
                 col.names = T,
                 sep = ",")
     
-    write.table(x = as.data.frame(boot.results),
-                paste0(results.dir,'rep_',i,"/",
-                       "Bootstrap_Results.csv"),
-                row.names = F,
-                col.names = T,
-                sep = ",")
+    #write.table(x = as.data.frame(boot.results),
+    #            paste0(results.dir,'rep_',i,"/",
+    #                   "Bootstrap_Results.csv"),
+    #            row.names = F,
+    #            col.names = T,
+    #            sep = ",")
     
     if(replicate > 1) {
       Results[[i]] <- list(summary.table = all.AICc,
-                           boot.results = boot.results,
+                           #boot.results = boot.results,
                            all.k = all.k,
                            all.cd = all.cd,
-                           genetic.dist_mat = genetic.mat,
+                           #genetic.dist_mat = genetic.mat,
                            ss.results = ss.results,
                            ms.results = ms.results
                            )
@@ -525,10 +308,10 @@ all_comb <- function(gdist.inputs,
       
     } else {
       Results <- list(summary.table = all.AICc,
-                      boot.results = boot.results,
+                      #boot.results = boot.results,
                       all.k = all.k,
                       all.cd = all.cd,
-                      genetic.dist_mat = genetic.mat,
+                      #genetic.dist_mat = genetic.mat,
                       ss.results = ss.results,
                       ms.results = ms.results
                       )
@@ -537,5 +320,4 @@ all_comb <- function(gdist.inputs,
   } # Close replicate loop
   
   return(Results)
-  
 } # End function

@@ -92,6 +92,7 @@
 #' quiet = FALSE)
 
 GA.prep <- function(ASCII.dir,
+                    form = formula(response ~ resistance + (1 | pop1) + (1 | pop2)),
                     Results.dir = NULL,
                     min.cat = 0.0001,
                     max.cat = 2500,
@@ -118,30 +119,20 @@ GA.prep <- function(ASCII.dir,
                     mutation = gaControl(type)$mutation,
                     pop.size = NULL,
                     parallel = FALSE,
+                    ncores = NULL,
                     seed = NULL,
                     quiet = FALSE) {
+  
+  # Create result dir
+  if(Results.dir != "all.comb"){
+    unlink(Results.dir, recursive = T,force = T) # Clear it first
+    dir.create(Results.dir) # Create it
+    Results.dir <- paste0(Results.dir,"/")
+  }
+    
+  # If the rsistances should be scaled or not
   if(scale == FALSE) {
     scale <- NULL
-  }
-  
-  if (!is.null(Results.dir) & (Results.dir != 'all.comb') & (Results.dir != 'all_comb')) {
-    TEST.dir <- !file_test("-d", Results.dir)
-    if (TEST.dir == TRUE) {
-      stop("The specified 'Results.dir' does not exist")
-    }
-  }
-  
-  if ((class(ASCII.dir)[1] == 'RasterStack' |
-       class(ASCII.dir)[1] == 'RasterLayer') & is.null(Results.dir)) {
-    warning(paste0(
-      "'Results.dir' was not specified. Results will be exported to ",
-      getwd()
-    ))
-    Results.dir <- getwd()
-  }
-  
-  if (class(ASCII.dir)[1] != 'RasterStack' & is.null(Results.dir)) {
-    Results.dir <- ASCII.dir
   }
   
   if (class(ASCII.dir)[1] == 'RasterStack' |
@@ -369,6 +360,7 @@ GA.prep <- function(ASCII.dir,
   
   if(Results.dir != "all.comb" & Results.dir != "all_comb") {
     list(
+      form = form,
       parm.index = parm.index,
       ga.min = ga.min,
       ga.max = ga.max,
@@ -399,6 +391,7 @@ GA.prep <- function(ASCII.dir,
       selection = selection,
       mutation = mutation,
       parallel = parallel,
+      ncores = ncores,
       pop.mult = pop.mult,
       percent.elite = percent.elite,
       Min.Max = Min.Max,
@@ -409,6 +402,7 @@ GA.prep <- function(ASCII.dir,
     )
   } else {
     list(
+      form = form,
       parm.index = parm.index,
       ga.min = ga.min,
       ga.max = ga.max,
@@ -439,6 +433,7 @@ GA.prep <- function(ASCII.dir,
       selection = selection,
       mutation = mutation,
       parallel = parallel,
+      ncores = ncores,
       pop.mult = pop.mult,
       percent.elite = percent.elite,
       Min.Max = Min.Max,
@@ -447,6 +442,7 @@ GA.prep <- function(ASCII.dir,
       seed = seed,
       quiet = quiet,
       inputs = list(
+        form = form,
         ASCII.dir = ASCII.dir,
         Results.dir = Results.dir,
         min.cat = min.cat,
@@ -474,10 +470,10 @@ GA.prep <- function(ASCII.dir,
         mutation = mutation,
         pop.size = pop.size,
         parallel = parallel,
+        ncores = ncores,
         seed = seed,
         quiet = quiet
       )
     )
   }
-  
 }

@@ -15,23 +15,23 @@ parallel,
 cores)
 }
 \arguments{
-\item{n.Pops}{The number of populations that are being assessed}
-
-\item{response}{Vector of pairwise genetic distances (lower half of pairwise matrix).}
-
-\item{CS_Point.File}{The path to the Circuitscape formatted point file. See Circuitscape documentation for help.}
-
 \item{CS.program}{The path to the CIRCUITSCAPE executable file (cs_run.exe) on a Windows PC. If using a Linux or Mac system, provide the full path to the "csrun.py" file. See details below.}
 
 \item{Neighbor.Connect}{Select 4 or 8 to designate the connection scheme to use in CIRCUITSCAPE (Default = 8)}
-
-\item{pairs_to_include}{Default is NULL. If you wish to use the advanced CIRCUITSCAPE setting mode to include or exclude certain pairs of sample locations, provide the path to the properly formatted "pairs_to_include.txt" file here. Currently only "include" method is supported.}
 
 \item{platform}{What computing platform are you using ("pc", "other"). This code has only been tested on Windows PC!!!}
 
 \item{parallel}{(Logical) If using Linux / Ubuntu, do you want to run CIRCUITSCAPE in parallel?}
 
 \item{cores}{If using Linux / Ubuntu and `parallel = TRUE`, how many cores should be used for parallel processing?}
+
+\item{n.Pops}{The number of populations that are being assessed}
+
+\item{response}{Vector of pairwise genetic distances (lower half of pairwise matrix).}
+
+\item{CS_Point.File}{The path to the Circuitscape formatted point file. See Circuitscape documentation for help.}
+
+\item{pairs_to_include}{Default is NULL. If you wish to use the advanced CIRCUITSCAPE setting mode to include or exclude certain pairs of sample locations, provide the path to the properly formatted "pairs_to_include.txt" file here. Currently only "include" method is supported.}
 }
 \value{
 An R object that is a required input into optimization functions

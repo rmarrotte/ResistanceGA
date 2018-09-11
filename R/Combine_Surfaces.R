@@ -37,32 +37,13 @@
 #' @author Bill Peterman <Bill.Peterman@@gmail.com>
 Combine_Surfaces <-
   function(PARM,
-           CS.inputs = NULL,
-           gdist.inputs = NULL,
            GA.inputs,
            out = NULL,
            File.name = paste(GA.inputs$parm.type$name, collapse = "."),
            rescale = TRUE,
            p.contribution = FALSE) {
     
-    if (!is.null(CS.inputs)) {
-      ID <- CS.inputs$ID
-      ZZ <- CS.inputs$ZZ
-      response <- CS.inputs$response
-      CS_Point.File <- CS.inputs$CS_Point.File
-      CS.program <- CS.inputs$CS.program
-      EXPORT.dir <- out
-    }
-    
-    if (!is.null(gdist.inputs)) {
-      ID <- gdist.inputs$ID
-      ZZ <- gdist.inputs$ZZ
-      response <- gdist.inputs$response
-      samples <- gdist.inputs$samples
-      EXPORT.dir <- out
-    }
-    
-    
+    EXPORT.dir <- out
     ######
     select.trans <- GA.inputs$select.trans
     r <- GA.inputs$Resistance.stack

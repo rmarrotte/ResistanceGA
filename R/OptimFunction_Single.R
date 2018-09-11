@@ -22,8 +22,22 @@ Resistance.Opt_single <-
            Min.Max = 'max',
            iter = NULL,
            quiet = FALSE) {
+    require(raster)
+    require(lme4)
+    require(MuMIn)
     t1 <- proc.time()[3]
     
+    # Set global vars
+    if(!is.null(gdist.inputs)){
+      results_df <- gdist.inputs$response
+      n <- gdist.inputs$n.Pops
+      ZZ <- gdist.inputs$ZZ
+    }else if(!is.null(CS.inputs)){
+      results_df <- CS.inputs$response
+      n <- CS.inputs$n.Pops
+      ZZ <- CS.inputs$ZZ
+    }else{stop("Need a proper method")}
+
     if(is.null(iter)) {
       iter <- 1
     }
@@ -103,91 +117,50 @@ Resistance.Opt_single <-
     ## If a surface was reclassified or transformed, apply the following
     if ((GA.inputs$surface.type[iter] == "cat") ||
         (equation %in% select.trans[[iter]])) {
-      
       if(keep == 0) {
         ## Use -99999 as 'ga' maximizes
         obj.func.opt <- -99999
       } else {
-        File.name <- "resist_surface"
-        
         rclmat <- matrix(c(1e-100, 1e-6, 1e-06, 1e6, Inf, 1e6, -1, 0, 1e6),
                          ncol = 3,
                          byrow = TRUE)
-        
         r <- reclassify(r, rclmat)
         
-        if (!is.null(CS.inputs)) {
-          writeRaster(
-            x = r,
-            filename = paste0(EXPORT.dir, File.name, ".asc"),
-            overwrite = TRUE
-          )
-          CS.resist <-
-            Run_CS2(
-              CS.inputs,
-              GA.inputs,
-              r = r,
-              EXPORT.dir = GA.inputs$Write.dir,
-              File.name = File.name
-            )
-          
-          # Run mixed effect model on each Circuitscape effective resistance
-          mod_mlpe <- suppressWarnings(MLPE.lmm2(results_df = CS.resist,
-                        ZZ = CS.inputs$ZZ,
-                        REML = FALSE,
-                        scale = F))
-          
-          if (method == "AIC") {            
-            obj.func <- suppressWarnings(AIC(mod_mlpe))
-            obj.func.opt <- obj.func * -1
-          } else if (method == "R2") {
-            obj.func <- suppressWarnings(r.squaredGLMM(mod_mlpe))
-            obj.func.opt <- obj.func[[1]]
-            
-          } else {
-            obj.func <- suppressWarnings(logLik(mod_mlpe))
-            obj.func.opt <- obj.func[[1]]
-          }
-        } # End CS Loop         
-        
-        
-        # gdistance ------------------------------------------------------------
-        if (!is.null(gdist.inputs)) {
-          if(cellStats(r, "mean") == 0) { # Skip iteration
-            
-            obj.func.opt <- -99999
-            
-          } 
-          
-          cd <- try(Run_gdistance(gdist.inputs, r), TRUE)
-          
+        if(cellStats(r, "mean") == 0) { # Skip iteration
+          obj.func.opt <- -99999
+        }else{
+          if (!is.null(CS.inputs)) {
+            cd <- try(Run_CS(CS.inputs, r), TRUE)
+          }else if(!is.null(gdist.inputs)){
+            cd <- try(Run_gdistance(gdist.inputs, r), TRUE)
+          }else{stop("Error proper method not specified")}
+          # Next build model
           if(isTRUE(class(cd) == 'try-error') || isTRUE(exists('obj.func.opt'))) {
-            
             obj.func.opt <- -99999
-            
-          } else { # Continue with iteration
-            
-            mod_mlpe <- suppressWarnings(MLPE.lmm2(results_df = cd,
-                        ZZ = gdist.inputs$ZZ,
-                        REML = FALSE,
-                        scale = F))
-            
-            if (method == "AIC") {
+          }else{
+            # Run mixed effect model on each Circuitscape effective resistance
+            mod_mlpe <- suppressWarnings(MLPE.lmm(results_df = cd,
+                                                  form = GA.inputs$form,
+                                                  ZZ = ZZ,
+                                                  REML = FALSE,
+                                                  scale = T))
+            if (method == "AIC") {            
               obj.func <- suppressWarnings(AIC(mod_mlpe))
               obj.func.opt <- obj.func * -1
             } else if (method == "R2") {
               obj.func <- suppressWarnings(r.squaredGLMM(mod_mlpe))
               obj.func.opt <- obj.func[[1]]
+              
             } else {
               obj.func <- suppressWarnings(logLik(mod_mlpe))
               obj.func.opt <- obj.func[[1]]
             }
-          } # Keep loop
-        } # End gdistance Loop
+          }
+        }
       } # End drop Loop
       
       rt <- proc.time()[3] - t1
-      if (quiet == FALSE) {
+      if (!quiet) {
         cat(paste0("\t", "Iteration took ", round(rt, digits = 2), " seconds"), "\n")
         #     cat(paste0("\t", EQ,"; ",round(SHAPE,digits=2),"; ", round(Max.SCALE,digits=2)),"\n")
         cat(paste0("\t", method, " = ", round(obj.func.opt, 4)), "\n", "\n")
@@ -205,7 +178,7 @@ Resistance.Opt_single <-
       obj.func.opt <- -99999
       
       rt <- proc.time()[3] - t1
-      if (quiet == FALSE) {
+      if (!quiet) {
         cat(paste0("\t", "Iteration took ", round(rt, digits = 2), " seconds"), "\n")
         cat(paste0("\t", method, " = ", obj.func.opt, "\n"))
         if (!is.null(iter)) {

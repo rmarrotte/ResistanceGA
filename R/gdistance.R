@@ -28,7 +28,8 @@ gdist.prep <-
            transitionFunction = function(x) 1 / mean(x),
            directions = 8,
            longlat = FALSE,
-           method = 'commuteDistance') {
+           method = 'commuteDistance',
+           ncores = 1) {
     
     
     if (method != 'commuteDistance') {
@@ -53,7 +54,7 @@ gdist.prep <-
     response_df$pop2 <- factor(response_df$pop2,levels=sort(unique(c(response_df$pop1,response_df$pop2))))    
     
     # Make ZZ Mat
-    suppressWarnings(ZZ <- ZZ.mat(response_df[,"pop1","pop2"]))
+    suppressWarnings(ZZ <- ZZ.mat(response_df[,c("pop1","pop2")]))
     
     ret <- list(response_df = response_df,
                 n.Pops = length(levels(response_df$pop1)),
@@ -62,6 +63,7 @@ gdist.prep <-
                 directions = directions,
                 ZZ = ZZ,
                 longlat = longlat,
-                method = method)
+                method = method,
+                ncores = ncores)
    
   }

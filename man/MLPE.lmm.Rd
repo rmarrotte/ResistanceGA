@@ -7,22 +7,20 @@
 MLPE.lmm(resistance, 
                 pairwise.genetic, 
                 REML = FALSE, 
-                ID = NULL, 
-                ZZ = NULL,
                 scale = TRUE)
 }
 \arguments{
-\item{resistance}{Path to pairwise resistance distance matrix (resistances.out) from CS results. Alternatively, provide the pairwise resistances created from optimizing with `gdistance` (result of Run_gdistance).}
-
-\item{pairwise.genetic}{Lower half of pairwise genetic distance matrix}
-
 \item{REML}{Logical. If TRUE, mixed effects model will be fit using restricted maximum likelihood. Default = FALSE}
-
-\item{ID}{The to_from ID list for the MLPE model. The function will automatically create this object, but it can be specified directly from the output of CS.prep or gdist.prep (Default = NULL)}
 
 \item{ZZ}{The sparse matrix object for the MLPE model. The function will automatically create this object, but it can be specified directly from the output of CS.prep or gdist.prep (Default = NULL)}
 
 \item{scale}{Specify whether the pairwise distance values be scaled and centered (Default = TRUE)}
+
+\item{resistance}{Path to pairwise resistance distance matrix (resistances.out) from CS results. Alternatively, provide the pairwise resistances created from optimizing with `gdistance` (result of Run_gdistance).}
+
+\item{pairwise.genetic}{Lower half of pairwise genetic distance matrix}
+
+\item{ID}{The to_from ID list for the MLPE model. The function will automatically create this object, but it can be specified directly from the output of CS.prep or gdist.prep (Default = NULL)}
 }
 \value{
 A lmer object from the fitted model

@@ -22,6 +22,7 @@
 
 MLPE.lmm <-
   function(results_df, # assume resistance is a 4 column df: Pop1, Pop2, response, resistance
+           form = formula(response ~ resistance + (1 | pop1) + (1 | pop2)),
            REML = FALSE,
            ZZ,
            scale = T) {
@@ -32,17 +33,17 @@ MLPE.lmm <-
     }       
     
     # If pops are not BOTH found in pop1 and pop2, ignore the ZZ mat
-    if(any(!is.na(match(results_df$pop1,results_df$pop2)))){
-      # Fit model
-      mod <- lFormula(response ~ resistance + (1 | pop1),
-              data = results_df,
-              REML = REML)
-      mod$reTrms$Zt <- ZZ
-    }else{
-      mod <- lFormula(response ~ resistance + (1 | pop1) + (1 | pop2),
+    #if(any(!is.na(match(results_df$pop1,results_df$pop2)))){
+    #  # Fit model
+    #  mod <- lFormula(response ~ resistance + (1 | pop1),
+    #          data = results_df,
+    #          REML = REML)
+    #  mod$reTrms$Zt <- ZZ
+    #}else{
+      mod <- lFormula(form,
                data = results_df,
                REML = REML)
-    }
+    #}
     dfun <- do.call(mkLmerDevfun, mod)
     opt <- optimizeLmer(dfun)
     MOD <- (mkMerMod(environment(dfun), opt, mod$reTrms, fr = mod$fr))
@@ -50,7 +51,8 @@ MLPE.lmm <-
   }
 
 MLPE.lmm_coef <-
-  function(res_list, # List of all distances each with df: pop1, pop2, resistance, response           
+  function(res_list, # List of all distances each with df: pop1, pop2, resistance, response   
+           form,
            out.dir = NULL,
            ZZ) {
     
@@ -60,7 +62,7 @@ MLPE.lmm_coef <-
       MOD <- MLPE.lmm(results_df=dat,ZZ=ZZ)
       Mod.Summary <- summary(MOD)
       COEF <- Mod.Summary$coefficients
-      row.names(COEF) <- c("Intercept", resist.names[i])
+      row.names(COEF) <- c("Intercept", paste0("res",i))
       COEF.Table <- rbind(COEF.Table, COEF)
     }
         

@@ -16,32 +16,74 @@ Run_gdistance <- function(gdist.inputs,
     r <- raster(r)
   }
   
-   
+  # Make transition matrix
   tr <- transition(
     x = r,
     transitionFunction = gdist.inputs$transitionFunction,
     directions = gdist.inputs$directions
   )
   
-  ret <- c()
-    for(i in 1:dim(gdist.inputs$response_df)[1]){
-      pairID <- as.numeric(gdist.inputs$response_df[i,1:2])
-      pairCoords <- coordinates(gdist.inputs$sites_sp[pairID,])
-      # Commute dist
-      if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'costDistance') {
-        trC <- geoCorrection(tr, "c", scl = scl)
-        ret <- c(ret,costDistance(trC, pairCoords))
-      }    
-      if (gdist.inputs$longlat == TRUE | gdist.inputs$directions >= 8 & gdist.inputs$method == 'commuteDistance') {
-        trR <- geoCorrection(tr, "r", scl = scl)
-        ret <- c(ret,commuteDistance(trR, pairCoords) / 1000)
+  # Correct it
+  if(gdist.inputs$method == 'costDistance'){
+    trCorrect <- geoCorrection(tr, "c", scl = scl)
+  }else{
+    trCorrect <- geoCorrection(tr, "r", scl = scl)
+  }
+  
+  # All pairs ?
+  if(any(is.na(match(gdist.inputs$response$pop1,
+                      gdist.inputs$response$pop2)))){
+    #print("Running gdistance without all pairs!")
+    # Gdistance internal function
+    my_gdistance <- function(pair_IDs,method,trCorrect,response_df,sites_sp,scl){
+      require(gdistance)
+      pair_IDs <- as.numeric(response_df[pair_IDs,1:2])
+      pairs_sp <- sites_sp[pair_IDs,]
+      # Cost dist
+      if (method == 'costDistance') {
+        costDistance(trCorrect, pairs_sp)
+        # Commute dist
+      }else if (method == 'commuteDistance') {
+        commuteDistance(trCorrect, pairs_sp) / 1000
+      }else{
+        stop("Method must be 'costDistance' or 'commuteDistance'")
       }
     }
-    rm(i)
+    # Run each pair sequentially or in parallel
+    if(gdist.inputs$ncores == 1){
+      ret <- lapply(1:dim(response_df)[1],
+                    FUN = my_gdistance, 
+                    method = gdist.inputs$method,
+                    trCorrect = trCorrect,
+                    response_df = gdist.inputs$response_df,
+                    sites_sp = gdist.inputs$sites_sp,
+                    scl = scl)
+    }else{
+      ret <- sfLapply(1:dim(response_df)[1],
+                      fun = my_gdistance, 
+                      method = gdist.inputs$method,
+                      trCorrect = trCorrect,
+                      response_df = gdist.inputs$response_df,
+                      sites_sp = gdist.inputs$sites_sp,
+                      scl = scl)
+    }
+  }else{
+    # Run all pairs
+    # Cost dist
+    if (gdist.inputs$method == 'costDistance') {
+      ret <- costDistance(trCorrect, sites_sp)
+      # Commute dist
+    }else if (gdist.inputs$method == 'commuteDistance') {
+      ret <- commuteDistance(trCorrect, sites_sp) / 1000
+    }else{
+      stop("Method must be 'costDistance' or 'commuteDistance'")
+    }
+    ret <- as.numeric(as.dist(ret))
+  }
   
   # Merge the results to the response df
   results_df <- gdist.inputs$response_df
-  results_df <- data.frame(results_df,"resistance"=ret)
+  results_df <- data.frame(results_df,"resistance"=unlist(ret))
   
   # Check for -1 and NA
   if(any(results_df$resistance == -1)){

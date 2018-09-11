@@ -232,11 +232,27 @@ read.matrix2 <- function(cs.matrix) {
 
 # Create ZZ matrix for mixed effects model
 ZZ.mat <- function(ID) {
-  Zl <-
-    lapply(c("pop1", "pop2"), function(nm)
-      Matrix::fac2sparse(ID[[nm]], "d", drop = FALSE))
+  lvl_lab <- levels(ID$pop1) # Get levels
+  lvl_ID <- 1:length(lvl_lab) # Get level ID
+  full_ID <- To.From.ID(length(lvl_lab)) # Make full pairs
+  full_ID$pop1 <- lvl_lab[full_ID$pop1] # Fix pair names
+  full_ID$pop2 <- lvl_lab[full_ID$pop2] # Fix pair names
+  pop12A <- paste(full_ID$pop1,full_ID$pop2)
+  pop12B <- paste(ID$pop1,ID$pop2)
+  keep <- !is.na(match(pop12A,pop12B))
+  #full_ID[keep,]
+  
+  #Make ZZ
+  Zl <- lapply(c("pop1", "pop2"), function(nm){
+    Matrix::fac2sparse(full_ID[[nm]], "d", drop = FALSE)
+  })
   ZZ <- Reduce("+", Zl[-1], Zl[[1]])
-  return(ZZ)
+  
+  # Reduce mat
+  ZZ_select <- ZZ[,keep]
+  
+  # Return ZZ
+  return(ZZ_select)
 }
 
 # Rescale function

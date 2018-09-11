@@ -7,10 +7,6 @@
 Diagnostic.Plots(resistance.mat, genetic.dist, XLAB,YLAB, plot.dir, type, name, ID, ZZ)
 }
 \arguments{
-\item{resistance.mat}{Path to CIRCUITSCAPE "_resistances.out" file, or costDistance object created from running gdistance}
-
-\item{genetic.dist}{Vector of pairwise genetic distances (lower half of pairwise matrix). Can be input as CS.inputs$response}
-
 \item{XLAB}{Label for x-axis (Defaults to "Estimated resistance")}
 
 \item{YLAB}{Label for y-axis (Defaults to "Genetic distance")}
@@ -21,9 +17,13 @@ Diagnostic.Plots(resistance.mat, genetic.dist, XLAB,YLAB, plot.dir, type, name, 
 
 \item{name}{The name to be attached to the output file. Must be specified when getting diagnostic plots for gdistance models}
 
-\item{ID}{The to_from ID list for the MLPE model. The function will automatically create this object, but it can be specified directly from the output of CS.prep or gdist.prep (Default = NULL)}
-
 \item{ZZ}{The sparse matrix object for the MLPE model. The function will automatically create this object, but it can be specified directly from the output of CS.prep or gdist.prep (Default = NULL)}
+
+\item{resistance.mat}{Path to CIRCUITSCAPE "_resistances.out" file, or costDistance object created from running gdistance}
+
+\item{genetic.dist}{Vector of pairwise genetic distances (lower half of pairwise matrix). Can be input as CS.inputs$response}
+
+\item{ID}{The to_from ID list for the MLPE model. The function will automatically create this object, but it can be specified directly from the output of CS.prep or gdist.prep (Default = NULL)}
 }
 \value{
 A multipanel panel .tif including histogram of residuals and qqplot of fitted mixed effects model

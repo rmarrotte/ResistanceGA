@@ -2,7 +2,7 @@
 #'
 #' This function will prepare objects needed for running optimization functions
 #'
-#' @param n.Pops The number of populations that are being assessed sdf
+#' @param n.Pops The number of populations that are being assessed
 #' @param response Vector of pairwise genetic distances (lower half of pairwise matrix).
 #' @param CS_Point.File The path to the Circuitscape formatted point file. See Circuitscape documentation for help.
 #' @param CS.program The path to the CIRCUITSCAPE executable file (cs_run.exe) on a Windows PC. If using a Linux or Mac system, provide the full path to the "csrun.py" file. See details below.
@@ -45,7 +45,6 @@ CS.prep <- function(response_df, #dataframe: pop1, pop2, response"
                     CS.program = '"C:/Program Files/Circuitscape/cs_run.exe"',
                     Neighbor.Connect = 8,
                     platform = 'pc',
-                    parallel = FALSE,
                     cores = NULL) {
   CS.exe_Test <- gsub("\"", "", CS.program)
   
@@ -68,11 +67,6 @@ CS.prep <- function(response_df, #dataframe: pop1, pop2, response"
     }
   }
   
-  if (platform == 'pc') {
-    parallel = FALSE
-    cores = NULL
-  }
-  
   # Sort response df
   response_df <- response_df[order(response_df$pop1,response_df$pop2),]
   row.names(response_df) <- NULL 
@@ -88,7 +82,7 @@ CS.prep <- function(response_df, #dataframe: pop1, pop2, response"
   pairs_to_include <- "pairs_to_include.txt"  
   
   # Make ZZ Mat
-  suppressWarnings(ZZ <- ZZ.mat(response_df[,"pop1","pop2"]))
+  suppressWarnings(ZZ <- ZZ.mat(response_df[,c("pop1","pop2")]))
   
   # Make input list
   list(
@@ -100,7 +94,6 @@ CS.prep <- function(response_df, #dataframe: pop1, pop2, response"
     Neighbor.Connect = Neighbor.Connect,
     platform = platform,
     pairs_to_include = pairs_to_include,
-    parallel = parallel,
     cores = cores
   )
 }
